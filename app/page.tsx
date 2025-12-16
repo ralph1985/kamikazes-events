@@ -119,52 +119,52 @@ export default function Page() {
   useEffect(() => {
     if (!selectedEvent) return;
     saveEvent(selectedEvent);
-    if (selectedEventData) {
-      setSelectedDates((prev) => {
-        const filtered = prev.filter((date) =>
-          isWithinVoteWindow(
-            formatDayKey(date),
-            selectedEventData.window.start,
-            selectedEventData.window.end
-          )
-        );
-        return filtered;
-      });
-    }
-    const fetchResults = async () => {
+    const fetchData = async () => {
       setResultsLoading(true);
+      if (selectedEventData) {
+        setSelectedDates((prev) => {
+          const filtered = prev.filter((date) =>
+            isWithinVoteWindow(
+              formatDayKey(date),
+              selectedEventData.window.start,
+              selectedEventData.window.end
+            )
+          );
+          return filtered;
+        });
+      }
+
       try {
         await refreshResults(selectedEvent);
       } catch (error) {
         setErrorMessage(
           error instanceof Error ? error.message : "Error al cargar resultados"
         );
-      } finally {
-        setResultsLoading(false);
       }
-    };
-    const fetchSelection = async () => {
-      if (!clientId) return;
-      try {
-        const res = await fetch(
-          `/api/vote?eventId=${encodeURIComponent(
-            selectedEvent
-          )}&voterId=${encodeURIComponent(clientId)}`,
-          { cache: "no-store" }
-        );
-        if (res.ok) {
-          const payload: { days?: string[] } = await res.json();
-          const days = payload.days ?? [];
-          setSelectedDates(days.map((day) => parseDayKey(day)));
-          return;
+
+      if (clientId) {
+        try {
+          const res = await fetch(
+            `/api/vote?eventId=${encodeURIComponent(
+              selectedEvent
+            )}&voterId=${encodeURIComponent(clientId)}`,
+            { cache: "no-store" }
+          );
+          if (res.ok) {
+            const payload: { days?: string[] } = await res.json();
+            const days = payload.days ?? [];
+            setSelectedDates(days.map((day) => parseDayKey(day)));
+          } else {
+            setSelectedDates([]);
+          }
+        } catch {
+          setSelectedDates([]);
         }
-      } catch {
-        // ignore
       }
-      setSelectedDates([]);
+      setResultsLoading(false);
     };
-    fetchResults();
-    fetchSelection();
+
+    fetchData();
   }, [
     clientId,
     defaultSelection,
