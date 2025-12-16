@@ -12,6 +12,7 @@ import {
 } from "../lib/client";
 import type { EventItem, VoteResult } from "../lib/storage/StorageDriver";
 import { Header } from "../components/Header";
+import { PageNav } from "../components/PageNav";
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -144,7 +145,10 @@ export default function ResultsPage() {
           `Evento: ${events.find((e) => e.id === selectedEvent)?.name || "—"}`,
           `Nombre: ${voterName || "Pendiente"}`,
         ]}
-        navLinks={[
+      />
+      <PageNav
+        label="Resultados"
+        links={[
           { href: "/", label: "Votar" },
           {
             href: "/settings",

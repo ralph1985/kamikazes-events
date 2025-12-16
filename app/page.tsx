@@ -22,6 +22,7 @@ import {
 } from "./lib/client";
 import { LoadingOverlay } from "./components/LoadingOverlay";
 import { Header } from "./components/Header";
+import { PageNav } from "./components/PageNav";
 
 type VoteState = "idle" | "loading" | "success" | "error";
 
@@ -236,12 +237,15 @@ export default function Page() {
       <Header
         title="Votar"
         subtitle="Vota el día del evento"
-        description="Elige tu evento, escribe tu nombre y marca los días que mejor te encajan. Los resultados se actualizan al instante."
+        description="Marca tus días disponibles; el voto se actualiza al instante al tocar el calendario."
         chips={[
           `Evento: ${events.find((e) => e.id === selectedEvent)?.name || "—"}`,
           `Nombre: ${voterName || "Pendiente"}`,
         ]}
-        navLinks={[
+      />
+      <PageNav
+        label="Votar"
+        links={[
           { href: "/results", label: "Resultados" },
           {
             href: "/settings",

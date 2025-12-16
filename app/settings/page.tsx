@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import { EventSelect } from '../components/EventSelect';
 import { Header } from '../components/Header';
+import { PageNav } from '../components/PageNav';
 import {
   clearClientData,
   getClientId,
@@ -99,10 +100,10 @@ export default function SettingsPage() {
         title="Preferencias"
         subtitle="Configura tu perfil"
         description="Define tu nombre y el evento activo. El ID del cliente se guarda al acceder por primera vez y se mantiene para reemplazar votos."
-        navLinks={[
-          { href: '/', label: 'Votar' },
-          { href: '/results', label: 'Resultados' }
-        ]}
+      />
+      <PageNav
+        label="Preferencias"
+        links={[{ href: '/', label: 'Votar' }, { href: '/results', label: 'Resultados' }]}
       />
 
       <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 space-y-4 shadow-lg">
