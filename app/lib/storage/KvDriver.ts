@@ -110,7 +110,7 @@ export class KvDriver implements StorageDriver {
   }
 
   private async recomputeCounts(eventId: string) {
-    const voterKeys = (await kv.smembers<string>(this.votersSetKey(eventId))) || [];
+    const voterKeys = (await kv.smembers(this.votersSetKey(eventId))) || [];
     const aggregate: Record<string, number> = {};
 
     for (const voterKey of voterKeys) {

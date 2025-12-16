@@ -108,7 +108,7 @@ export class MockDriver implements StorageDriver {
     const voterMap = this.voterSelections.get(eventId) ?? new Map();
     const counts: Counts = new Map();
     voterMap.forEach((days) => {
-      days.forEach((day) => counts.set(day, (counts.get(day) ?? 0) + 1));
+      days.forEach((day: string) => counts.set(day, (counts.get(day) ?? 0) + 1));
     });
     this.votes.set(eventId, counts);
   }
