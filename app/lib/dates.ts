@@ -1,4 +1,4 @@
-import { addDays, format, isAfter, isBefore, isValid, isWeekend, parseISO, startOfDay } from 'date-fns';
+import { addDays, format, isAfter, isBefore, isValid, isWeekend, parseISO, startOfDay, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export function formatDayKey(date: Date): string {

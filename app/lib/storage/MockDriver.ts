@@ -42,35 +42,9 @@ export class MockDriver implements StorageDriver {
   }
 
   private seedVotes() {
-    const sampleDays: string[] = [];
-    let cursor = minDate(defaultEvent);
-    const end = maxDate(defaultEvent);
-    while (sampleDays.length < 4 && cursor <= end) {
-      const weekday = cursor.getDay();
-      const isWeekend = weekday === 0 || weekday === 6;
-      if (isWeekend) {
-        sampleDays.push(formatDayKey(cursor));
-      }
-      cursor = addDays(cursor, 1);
-    }
-
-    const counts: Counts = new Map();
-    const voters = new Map<string, string[]>();
-    const sampleVoters = [
-      { id: 'v-ana', days: [sampleDays[0]] },
-      { id: 'v-luis', days: [sampleDays[0], sampleDays[1]] },
-      { id: 'v-carlota', days: [sampleDays[2]] },
-      { id: 'v-marcos', days: [sampleDays[3]] }
-    ];
-
-    sampleVoters.forEach(({ id, days }) => {
-      const key = this.normalizeId(id);
-      voters.set(key, days);
-      days.forEach((day) => counts.set(day, (counts.get(day) ?? 0) + 1));
-    });
-
-    this.votes.set(defaultEvent.id, counts);
-    this.voterSelections.set(defaultEvent.id, voters);
+    // start with empty votes and selections; no mock ballots preloaded
+    this.votes.set(defaultEvent.id, new Map());
+    this.voterSelections.set(defaultEvent.id, new Map());
   }
 
   async getEvents(): Promise<EventItem[]> {

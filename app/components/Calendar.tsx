@@ -8,14 +8,23 @@ import { formatDayKey } from '../lib/dates';
 
 type Props = {
   selected?: Date[];
-  onSelect: (dates: Date[]) => void;
+  onSelect: (date: Date) => void;
   fromDate: Date;
   toDate: Date;
   windowLabel?: string;
   dayVotes?: Record<string, number>;
+  loadingDayKey?: string | null;
 };
 
-export function Calendar({ selected = [], onSelect, fromDate, toDate, windowLabel, dayVotes }: Props) {
+export function Calendar({
+  selected = [],
+  onSelect,
+  fromDate,
+  toDate,
+  windowLabel,
+  dayVotes,
+  loadingDayKey
+}: Props) {
   const weeks = useMemo(() => {
     const start = startOfWeek(fromDate, { weekStartsOn: 1 });
     const end = endOfWeek(toDate, { weekStartsOn: 1 });
@@ -46,12 +55,8 @@ export function Calendar({ selected = [], onSelect, fromDate, toDate, windowLabe
   }, [fromDate, toDate]);
 
   const toggleDate = (day: Date) => {
-    const isSelected = selected.some((d) => isSameDay(d, day));
-    if (isSelected) {
-      onSelect(selected.filter((d) => !isSameDay(d, day)));
-    } else {
-      onSelect([...selected, day]);
-    }
+    if (isDisabled(day)) return;
+    onSelect(day);
   };
 
   const isDisabled = (day: Date) =>
@@ -88,11 +93,12 @@ export function Calendar({ selected = [], onSelect, fromDate, toDate, windowLabe
                   const disabled = isDisabled(day);
                   const active = selected.some((d) => isSameDay(d, day));
                   const voteCount = dayVotes?.[formatDayKey(day)] ?? 0;
+                  const isLoading = loadingDayKey === formatDayKey(day);
                   return (
                     <button
                       key={day.toISOString()}
                       type="button"
-                      disabled={disabled}
+                      disabled={disabled || isLoading}
                       onClick={() => toggleDate(day)}
                       className={clsx(
                         'h-12 rounded-lg border text-sm font-semibold transition',
@@ -100,11 +106,15 @@ export function Calendar({ selected = [], onSelect, fromDate, toDate, windowLabe
                         active
                           ? 'bg-emerald-500 text-slate-900 border-emerald-400 shadow-lg'
                           : 'border-slate-700 bg-slate-800/70 text-slate-100 hover:border-emerald-400',
-                        disabled && 'cursor-not-allowed opacity-40 hover:border-slate-700'
+                        (disabled || isLoading) && 'cursor-not-allowed opacity-40 hover:border-slate-700'
                       )}
                     >
                       <span>{format(day, 'd')}</span>
-                      <span className="text-[10px] text-emerald-200">{voteCount}</span>
+                      {isLoading ? (
+                        <span className="h-3 w-3 rounded-full border-2 border-emerald-200 border-t-transparent animate-spin" />
+                      ) : (
+                        <span className="text-[10px] text-emerald-200">{voteCount}</span>
+                      )}
                     </button>
                   );
                 })}
