@@ -128,8 +128,7 @@ export default function Page() {
             selectedEventData.window.end
           )
         );
-        if (filtered.length > 0) return filtered;
-        return [defaultSelection];
+        return filtered;
       });
     }
     const fetchResults = async () => {
@@ -156,15 +155,13 @@ export default function Page() {
         if (res.ok) {
           const payload: { days?: string[] } = await res.json();
           const days = payload.days ?? [];
-          if (days.length > 0) {
-            setSelectedDates(days.map((day) => parseDayKey(day)));
-            return;
-          }
+          setSelectedDates(days.map((day) => parseDayKey(day)));
+          return;
         }
       } catch {
         // ignore
       }
-      setSelectedDates([defaultSelection]);
+      setSelectedDates([]);
     };
     fetchResults();
     fetchSelection();
@@ -193,7 +190,6 @@ export default function Page() {
     const nextSelection = isSelected
       ? selectedDates.filter((d) => !isSameDay(d, day))
       : [...selectedDates, day];
-    if (nextSelection.length === 0) return;
 
     const prevSelection = selectedDates;
     setSelectedDates(nextSelection);

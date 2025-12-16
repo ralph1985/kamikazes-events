@@ -28,10 +28,6 @@ export async function POST(request: Request) {
     if (!eventId) {
       return NextResponse.json({ message: 'eventId es obligatorio' }, { status: 400 });
     }
-    if (days.length === 0) {
-      return NextResponse.json({ message: 'Debes elegir al menos un día' }, { status: 400 });
-    }
-
     const driver = await ensureDefaultEvent();
     const events = await driver.getEvents();
     const event = events.find((item) => item.id === eventId);
@@ -41,25 +37,19 @@ export async function POST(request: Request) {
 
     let normalizedDays: string[];
     try {
-      normalizedDays = Array.from(
-        new Set(
-          days.map((day) => {
-            if (!isWithinVoteWindow(day, event.window.start, event.window.end))
-              throw new Error('Fuera de rango');
-            return formatDayKey(parseDayKey(day));
-          })
-        )
-      );
+      normalizedDays =
+        days.length === 0
+          ? []
+          : Array.from(
+              new Set(
+                days.map((day) => {
+                  if (!isWithinVoteWindow(day, event.window.start, event.window.end))
+                    throw new Error('Fuera de rango');
+                  return formatDayKey(parseDayKey(day));
+                })
+              )
+            );
     } catch {
-      return NextResponse.json(
-        {
-          message: `El día no es válido o está fuera de rango (${event.window.start} a ${event.window.end}, solo fines de semana)`
-        },
-        { status: 400 }
-      );
-    }
-
-    if (normalizedDays.length === 0) {
       return NextResponse.json(
         {
           message: `El día no es válido o está fuera de rango (${event.window.start} a ${event.window.end}, solo fines de semana)`

@@ -113,7 +113,7 @@ export function Calendar({
                       {isLoading ? (
                         <span className="h-3 w-3 rounded-full border-2 border-emerald-200 border-t-transparent animate-spin" />
                       ) : (
-                        <span className="text-[10px] text-emerald-200">{voteCount}</span>
+                        <span className="text-[10px] text-emerald-200">{voteCount > 0 ? voteCount : ''}</span>
                       )}
                     </button>
                   );
