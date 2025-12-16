@@ -24,6 +24,10 @@ export default function ResultsPage() {
   const [clientId, setClientId] = useState<string>("");
   const [voterName, setVoterName] = useState<string>("");
   const selectedEventData = events.find((e) => e.id === selectedEvent);
+  const [modalDay, setModalDay] = useState<string | null>(null);
+  const [modalVoters, setModalVoters] = useState<string[]>([]);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState<string>("");
 
   const refreshResults = useCallback(async (eventId: string) => {
     const res = await fetch(
@@ -89,6 +93,42 @@ export default function ResultsPage() {
     };
     fetchResults();
   }, [refreshResults, selectedEvent]);
+
+  const openModal = async (day: string) => {
+    if (!selectedEvent) return;
+    setModalDay(day);
+    setModalLoading(true);
+    setModalError("");
+    try {
+      const res = await fetch(
+        `/api/voters?eventId=${encodeURIComponent(
+          selectedEvent
+        )}&day=${encodeURIComponent(day)}`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(
+          payload.message || "No se pudo cargar el detalle de votos"
+        );
+      }
+      const payload: { voters: string[] } = await res.json();
+      setModalVoters(payload.voters);
+    } catch (error) {
+      setModalError(
+        error instanceof Error ? error.message : "Error al cargar el detalle"
+      );
+      setModalVoters([]);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setModalDay(null);
+    setModalVoters([]);
+    setModalError("");
+  };
 
   return (
     <main className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
@@ -175,27 +215,64 @@ export default function ResultsPage() {
         {results.length > 0 && (
           <div className="list">
             {results.map((result) => (
-              <div
+              <button
                 key={result.day}
-                className="list-item"
+                className="list-item text-left w-full"
+                onClick={() => openModal(result.day)}
               >
                 <div className="flex flex-col">
                   <span className="text-slate-200 font-semibold">
                     {formatDisplay(result.day)}
                   </span>
+                  <span className="text-slate-400 text-xs">Clave: {result.day}</span>
                 </div>
                 <span className="text-emerald-300 font-bold text-lg">
                   {result.votes}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         )}
-      </section>
+    </section>
 
-      {errorMessage && (
-        <p className="text-red-300 text-sm">Aviso: {errorMessage}</p>
-      )}
-    </main>
-  );
+    {errorMessage && (
+      <p className="text-red-300 text-sm">Aviso: {errorMessage}</p>
+    )}
+
+    {modalDay && (
+      <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Votantes</p>
+              <p className="text-lg font-semibold text-slate-50">{formatDisplay(modalDay)}</p>
+            </div>
+            <button
+              onClick={closeModal}
+              className="text-slate-400 hover:text-slate-100 text-sm"
+              aria-label="Cerrar"
+            >
+              ✕
+            </button>
+          </div>
+          {modalLoading && <p className="text-slate-300 text-sm">Cargando...</p>}
+          {modalError && <p className="text-red-300 text-sm">{modalError}</p>}
+          {!modalLoading && !modalError && modalVoters.length === 0 && (
+            <p className="text-slate-400 text-sm">Sin votos en este día.</p>
+          )}
+          {!modalLoading && !modalError && modalVoters.length > 0 && (
+            <ul className="text-slate-100 text-sm space-y-2">
+              {modalVoters.map((voter, idx) => (
+                <li key={`${voter}-${idx}`} className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                  <span>{voter}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    )}
+  </main>
+);
 }

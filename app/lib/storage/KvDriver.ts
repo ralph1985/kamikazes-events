@@ -4,18 +4,6 @@ import { slugify } from '../slug';
 import type { EventItem, StorageDriver, VoteResult } from './StorageDriver';
 
 export class KvDriver implements StorageDriver {
-  private countsKey(eventId: string) {
-    return `event:${eventId}:counts`;
-  }
-
-  private voterStoreKey(eventId: string, voterKey: string) {
-    return `event:${eventId}:voter:${voterKey}`;
-  }
-
-  private votersSetKey(eventId: string) {
-    return `event:${eventId}:voters`;
-  }
-
   async getEvents(): Promise<EventItem[]> {
     const entries = (await kv.hgetall<Record<string, string>>('events:list')) || {};
     const events: EventItem[] = Object.entries(entries).map(([id, value]) => {
@@ -87,6 +75,7 @@ export class KvDriver implements StorageDriver {
 
     await kv.set(voterStoreKey, days);
     await kv.sadd(this.votersSetKey(eventId), voterKey);
+    await kv.set(this.voterNameKey(eventId, voterKey), _name);
     await this.recomputeCounts(eventId);
   }
 
@@ -96,17 +85,22 @@ export class KvDriver implements StorageDriver {
     return (await kv.get<string[]>(voterStoreKey)) || [];
   }
 
-  private buildVoterKey(raw: string): string {
-    return slugify(raw.trim().toLowerCase()) || 'anon';
+  async getVotersByDay(eventId: string, day: string): Promise<string[]> {
+    await this.recomputeCounts(eventId);
+    const voterKeys = (await kv.smembers(this.votersSetKey(eventId))) || [];
+    const matches: string[] = [];
+    for (const voterKey of voterKeys) {
+      const selection = (await kv.get<string[]>(this.voterStoreKey(eventId, voterKey))) || [];
+      if (selection.includes(day)) {
+        const name = (await kv.get<string>(this.voterNameKey(eventId, voterKey))) || 'Anónimo';
+        matches.push(name);
+      }
+    }
+    return matches;
   }
 
-  private isSerialized(value: string): boolean {
-    try {
-      const parsed = JSON.parse(value);
-      return Boolean(parsed?.window?.start && parsed?.window?.end);
-    } catch {
-      return false;
-    }
+  private buildVoterKey(raw: string): string {
+    return slugify(raw.trim().toLowerCase()) || 'anon';
   }
 
   private async recomputeCounts(eventId: string) {
@@ -123,6 +117,31 @@ export class KvDriver implements StorageDriver {
     await kv.del(this.countsKey(eventId));
     if (Object.keys(aggregate).length > 0) {
       await kv.hset(this.countsKey(eventId), aggregate);
+    }
+  }
+
+  private countsKey(eventId: string) {
+    return `event:${eventId}:counts`;
+  }
+
+  private voterStoreKey(eventId: string, voterKey: string) {
+    return `event:${eventId}:voter:${voterKey}`;
+  }
+
+  private voterNameKey(eventId: string, voterKey: string) {
+    return `event:${eventId}:voter:${voterKey}:name`;
+  }
+
+  private votersSetKey(eventId: string) {
+    return `event:${eventId}:voters`;
+  }
+
+  private isSerialized(value: string): boolean {
+    try {
+      const parsed = JSON.parse(value);
+      return Boolean(parsed?.window?.start && parsed?.window?.end);
+    } catch {
+      return false;
     }
   }
 }

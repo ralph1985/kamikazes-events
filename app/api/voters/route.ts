@@ -1,0 +1,33 @@
+import { NextResponse } from 'next/server';
+import { ensureDefaultEvent } from '../../lib/storage';
+import { isValidDayKey } from '../../lib/dates';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const eventId = searchParams.get('eventId')?.trim();
+    const day = searchParams.get('day')?.trim();
+
+    if (!eventId || !day) {
+      return NextResponse.json({ message: 'eventId y day son obligatorios' }, { status: 400 });
+    }
+    if (!isValidDayKey(day)) {
+      return NextResponse.json({ message: 'Día inválido' }, { status: 400 });
+    }
+
+    const driver = await ensureDefaultEvent();
+    const events = await driver.getEvents();
+    const event = events.find((item) => item.id === eventId);
+    if (!event) {
+      return NextResponse.json({ message: 'El evento no existe' }, { status: 400 });
+    }
+
+    const voters = await driver.getVotersByDay(eventId, day);
+    return NextResponse.json({ voters });
+  } catch (error) {
+    console.error('GET /api/voters', error);
+    return NextResponse.json({ message: 'No se pudo obtener la lista de votos' }, { status: 500 });
+  }
+}

@@ -18,6 +18,7 @@ export class MockDriver implements StorageDriver {
   private events: Map<string, string>;
   private votes: Map<string, Counts>;
   private voterSelections: Map<string, Map<string, string[]>>;
+  private voterNames: Map<string, string>;
   private windows: Map<string, { start: string; end: string }>;
 
   constructor() {
@@ -37,6 +38,7 @@ export class MockDriver implements StorageDriver {
     this.events = new Map(initialEvents.map((event) => [event.id, event.name]));
     this.votes = new Map();
     this.voterSelections = new Map();
+    this.voterNames = new Map();
     this.windows = new Map(initialEvents.map((event) => [event.id, event.window]));
     this.seedVotes();
   }
@@ -84,12 +86,11 @@ export class MockDriver implements StorageDriver {
   }
 
   async vote(eventId: string, voterId: string, _name: string, days: string[]): Promise<void> {
-    const counts = this.votes.get(eventId) ?? new Map();
     const voterKey = this.normalizeId(voterId);
     const voterMap = this.voterSelections.get(eventId) ?? new Map();
-    const previous = voterMap.get(voterKey) ?? [];
 
     voterMap.set(voterKey, days);
+    this.voterNames.set(voterKey, _name);
     this.voterSelections.set(eventId, voterMap);
     this.recomputeCounts(eventId);
   }
@@ -111,5 +112,16 @@ export class MockDriver implements StorageDriver {
       days.forEach((day: string) => counts.set(day, (counts.get(day) ?? 0) + 1));
     });
     this.votes.set(eventId, counts);
+  }
+
+  async getVotersByDay(eventId: string, day: string): Promise<string[]> {
+    const voterMap = this.voterSelections.get(eventId) ?? new Map();
+    const matches: string[] = [];
+    voterMap.forEach((days, voterKey) => {
+      if (days.includes(day)) {
+        matches.push(this.voterNames.get(voterKey) ?? 'Anónimo');
+      }
+    });
+    return matches;
   }
 }
