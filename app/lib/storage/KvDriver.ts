@@ -22,7 +22,7 @@ export class KvDriver implements StorageDriver {
     });
     const normalized = events.map((event) => ({
       ...event,
-      name: typeof event.name === 'string' ? event.name : String(event.name?.toString?.() ?? event.id)
+      name: typeof event.name === 'string' ? event.name : String(event.id)
     }));
     return normalized.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }
