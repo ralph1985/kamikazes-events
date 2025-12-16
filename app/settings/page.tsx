@@ -83,12 +83,20 @@ export default function SettingsPage() {
           <p className="text-emerald-400 text-sm font-semibold tracking-wide uppercase">
             kamikazes-events · Preferencias
           </p>
-          <nav className="flex gap-2 text-sm">
+          <nav className="flex gap-2 text-sm items-center">
             <Link className="tag" href="/">
               Votar
             </Link>
             <Link className="tag" href="/results">
               Resultados
+            </Link>
+            <Link
+              className="tag"
+              href="/settings"
+              aria-label="Preferencias"
+              title="Preferencias"
+            >
+              <span className="inline-flex h-4 w-4 items-center justify-center">⚙️</span>
             </Link>
           </nav>
         </div>
