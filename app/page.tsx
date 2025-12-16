@@ -21,6 +21,7 @@ import {
   saveName,
 } from "./lib/client";
 import { LoadingOverlay } from "./components/LoadingOverlay";
+import { Header } from "./components/Header";
 
 type VoteState = "idle" | "loading" | "success" | "error";
 
@@ -232,46 +233,24 @@ export default function Page() {
   return (
     <main className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
       <LoadingOverlay visible={initialLoading} />
-      <header className="space-y-3 bg-[#0b2447] border border-blue-500/70 rounded-2xl p-4 shadow-md text-slate-50">
-        <div className="flex items-center gap-3 justify-between">
-          <p className="text-sm font-semibold tracking-wide uppercase leading-tight text-slate-50">
-            kamikazes-events
-            <br />
-            Votar
-          </p>
-          <nav className="flex gap-2 text-sm items-center">
-            <Link
-              className="tag bg-white/10 border-blue-400 text-slate-50"
-              href="/results"
-            >
-              Resultados
-            </Link>
-            <Link
-              className="tag bg-white/10 border-blue-400 text-slate-50"
-              href="/settings"
-              aria-label="Preferencias"
-              title="Preferencias"
-            >
-              <span className="inline-flex h-4 w-4 items-center justify-center">⚙️</span>
-            </Link>
-          </nav>
-        </div>
-        <h1 className="text-3xl font-bold text-slate-50 leading-tight">
-          Vota el día del evento
-        </h1>
-        <p className="text-slate-100/80 text-sm">
-          Elige tu evento, escribe tu nombre y marca los días que mejor te
-          encajan. Los resultados se actualizan al instante.
-        </p>
-        <div className="flex flex-wrap gap-2 text-xs text-slate-50">
-          <span className="tag bg-white/10 border-blue-400 text-slate-50">
-            Evento: {events.find((e) => e.id === selectedEvent)?.name || "—"}
-          </span>
-          <span className="tag bg-white/10 border-blue-400 text-slate-50">
-            Nombre: {voterName || "Pendiente"}
-          </span>
-        </div>
-      </header>
+      <Header
+        title="Votar"
+        subtitle="Vota el día del evento"
+        description="Elige tu evento, escribe tu nombre y marca los días que mejor te encajan. Los resultados se actualizan al instante."
+        chips={[
+          `Evento: ${events.find((e) => e.id === selectedEvent)?.name || "—"}`,
+          `Nombre: ${voterName || "Pendiente"}`,
+        ]}
+        navLinks={[
+          { href: "/results", label: "Resultados" },
+          {
+            href: "/settings",
+            label: "Preferencias",
+            icon: <span className="inline-flex h-4 w-4 items-center justify-center">⚙️</span>,
+            ariaLabel: "Preferencias",
+          },
+        ]}
+      />
 
       {!voterName && (
         <p className="text-red-300 text-sm">

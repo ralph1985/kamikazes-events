@@ -1,9 +1,9 @@
 "use client";
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import { EventSelect } from '../components/EventSelect';
+import { Header } from '../components/Header';
 import {
   clearClientData,
   getClientId,
@@ -95,29 +95,15 @@ export default function SettingsPage() {
 
   return (
     <main className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
-      <header className="space-y-3 bg-[#0b2447] border border-blue-500/70 rounded-2xl p-4 shadow-md text-slate-50">
-        <div className="flex items-center gap-3 justify-between">
-          <p className="text-sm font-semibold tracking-wide uppercase leading-tight text-slate-50">
-            kamikazes-events
-            <br />
-            Preferencias
-          </p>
-          <nav className="flex gap-2 text-sm items-center">
-            <Link className="tag bg-white/10 border-blue-400 text-slate-50" href="/">
-              Votar
-            </Link>
-            <Link className="tag bg-white/10 border-blue-400 text-slate-50" href="/results">
-              Resultados
-            </Link>
-          </nav>
-        </div>
-        <h1 className="text-3xl font-bold text-slate-50 leading-tight">Configura tu perfil</h1>
-        <p className="text-slate-100/80 text-sm">
-          Define tu nombre y el evento activo. El ID del cliente se guarda al acceder por primera
-          vez y se mantiene para reemplazar votos.
-        </p>
-        <div className="flex flex-wrap gap-2 text-xs text-slate-50"></div>
-      </header>
+      <Header
+        title="Preferencias"
+        subtitle="Configura tu perfil"
+        description="Define tu nombre y el evento activo. El ID del cliente se guarda al acceder por primera vez y se mantiene para reemplazar votos."
+        navLinks={[
+          { href: '/', label: 'Votar' },
+          { href: '/results', label: 'Resultados' }
+        ]}
+      />
 
       <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 space-y-4 shadow-lg">
         <form className="space-y-4" onSubmit={handleSave}>

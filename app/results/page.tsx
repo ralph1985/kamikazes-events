@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { EventSelect } from "../components/EventSelect";
@@ -12,6 +11,7 @@ import {
   saveEvent,
 } from "../lib/client";
 import type { EventItem, VoteResult } from "../lib/storage/StorageDriver";
+import { Header } from "../components/Header";
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -132,50 +132,28 @@ export default function ResultsPage() {
 
   return (
     <main className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
-      <header className="space-y-3 bg-[#0b2447] border border-blue-500/70 rounded-2xl p-4 shadow-md text-slate-50">
-        <div className="flex items-center gap-3 justify-between">
-          <p className="text-sm font-semibold tracking-wide uppercase leading-tight text-slate-50">
-            kamikazes-events
-            <br />
-            Resultados
-          </p>
-          <nav className="flex gap-2 text-sm items-center">
-            <Link
-              className="tag bg-white/10 border-blue-400 text-slate-50"
-              href="/"
-            >
-              Votar
-            </Link>
-            <Link
-              className="tag bg-white/10 border-blue-400 text-slate-50"
-              href="/settings"
-              aria-label="Preferencias"
-              title="Preferencias"
-            >
-              <span className="inline-flex h-4 w-4 items-center justify-center">
-                ⚙️
-              </span>
-            </Link>
-          </nav>
-        </div>
-        <h1 className="text-3xl font-bold text-slate-50 leading-tight">
-          Resultados por evento
-        </h1>
-        <p className="text-slate-100/80 text-sm">
-          Consulta las fechas más votadas. Ventana activa:{" "}
-          {selectedEventData
+      <Header
+        title="Resultados"
+        subtitle="Resultados por evento"
+        description={`Consulta las fechas más votadas. Ventana activa: ${
+          selectedEventData
             ? `${selectedEventData.window.start} - ${selectedEventData.window.end}`
-            : "—"}
-        </p>
-        <div className="flex flex-wrap gap-2 text-xs text-slate-50">
-          <span className="tag bg-white/10 border-blue-400 text-slate-50">
-            Evento: {events.find((e) => e.id === selectedEvent)?.name || "—"}
-          </span>
-          <span className="tag bg-white/10 border-blue-400 text-slate-50">
-            Nombre: {voterName || "Pendiente"}
-          </span>
-        </div>
-      </header>
+            : "—"
+        }`}
+        chips={[
+          `Evento: ${events.find((e) => e.id === selectedEvent)?.name || "—"}`,
+          `Nombre: ${voterName || "Pendiente"}`,
+        ]}
+        navLinks={[
+          { href: "/", label: "Votar" },
+          {
+            href: "/settings",
+            label: "Preferencias",
+            icon: <span className="inline-flex h-4 w-4 items-center justify-center">⚙️</span>,
+            ariaLabel: "Preferencias",
+          },
+        ]}
+      />
 
       <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 space-y-4 shadow-lg">
         <EventSelect
