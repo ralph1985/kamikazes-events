@@ -51,7 +51,7 @@ export class MockDriver implements StorageDriver {
     return Array.from(this.events.entries())
       .map(([id, name]) => ({
         id,
-        name,
+        name: typeof name === 'string' ? name : String(name),
         window: this.windows.get(id) ?? { start: '2026-01-07', end: '2026-03-01' }
       }))
       .sort((a, b) => a.name.localeCompare(b.name, 'es'));

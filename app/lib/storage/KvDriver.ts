@@ -13,13 +13,18 @@ export class KvDriver implements StorageDriver {
       } catch {
         // ignore parse error
       }
+      const safeName = typeof value === 'string' ? value : String(id);
       return {
         id,
-        name: value,
+        name: safeName,
         window: { start: '2026-01-07', end: '2026-03-01' }
       };
     });
-    return events.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    const normalized = events.map((event) => ({
+      ...event,
+      name: typeof event.name === 'string' ? event.name : String(event.name?.toString?.() ?? event.id)
+    }));
+    return normalized.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }
 
   async createEvent(
