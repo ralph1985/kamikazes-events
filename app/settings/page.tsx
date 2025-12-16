@@ -1,9 +1,17 @@
 "use client";
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import { EventSelect } from '../components/EventSelect';
-import { getClientId, getStoredEvent, getStoredName, saveEvent, saveName } from '../lib/client';
+import {
+  clearClientData,
+  getClientId,
+  getStoredEvent,
+  getStoredName,
+  saveEvent,
+  saveName
+} from '../lib/client';
 import type { EventItem } from '../lib/storage/StorageDriver';
 
 export default function SettingsPage() {
@@ -13,6 +21,7 @@ export default function SettingsPage() {
   const [voterName, setVoterName] = useState<string>('');
   const [clientId, setClientId] = useState<string>('');
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [resetStatus, setResetStatus] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
@@ -42,6 +51,8 @@ export default function SettingsPage() {
     fetchEvents();
   }, []);
 
+  const router = useRouter();
+
   const handleSave = (event: FormEvent) => {
     event.preventDefault();
     if (!voterName.trim()) {
@@ -58,6 +69,7 @@ export default function SettingsPage() {
       saveEvent(selectedEvent);
       setStatus('saved');
       setTimeout(() => setStatus('idle'), 2000);
+      router.push('/');
     } catch (error) {
       setStatus('error');
       setErrorMessage(error instanceof Error ? error.message : 'No se pudo guardar');
@@ -120,6 +132,64 @@ export default function SettingsPage() {
 
         {status === 'saved' && <p className="text-emerald-300 text-sm">Preferencias guardadas.</p>}
         {errorMessage && <p className="text-red-300 text-sm">{errorMessage}</p>}
+
+        <div className="border-t border-slate-800 pt-4 space-y-3">
+          <p className="text-slate-200 font-semibold text-sm">Borrar datos locales y votos</p>
+          <p className="text-slate-400 text-xs">
+            Esta acción elimina tus votos de todos los eventos y borra el localStorage. Se pedirá
+            confirmación.
+          </p>
+          <button
+            type="button"
+            className="btn bg-red-500 hover:bg-red-400 text-slate-900"
+            disabled={resetStatus === 'working' || eventsLoading || !clientId}
+            onClick={async () => {
+              setResetStatus('idle');
+              setErrorMessage('');
+              const confirmReset = window.confirm(
+                'Se eliminarán todos tus votos en todos los eventos y se borrarán tus datos locales. ¿Continuar?'
+              );
+              if (!confirmReset) return;
+              try {
+                setResetStatus('working');
+                // limpiar votos en todos los eventos
+                const resEvents = await fetch('/api/events', { cache: 'no-store' });
+                if (!resEvents.ok) throw new Error('No se pudieron obtener los eventos');
+                const data: EventItem[] = await resEvents.json();
+                await Promise.all(
+                  data.map((event) =>
+                    fetch('/api/vote', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        eventId: event.id,
+                        voterId: clientId,
+                        name: voterName || 'Sin nombre',
+                        days: []
+                      })
+                    })
+                  )
+                );
+                clearClientData();
+                setVoterName('');
+                setSelectedEvent(data[0]?.id ?? '');
+                setResetStatus('done');
+              } catch (error) {
+                setResetStatus('error');
+                setErrorMessage(
+                  error instanceof Error ? error.message : 'No se pudo borrar la información'
+                );
+              } finally {
+                setTimeout(() => setResetStatus('idle'), 2500);
+              }
+            }}
+          >
+            {resetStatus === 'working' ? 'Borrando...' : 'Borrar votos y datos'}
+          </button>
+          {resetStatus === 'done' && (
+            <p className="text-emerald-300 text-xs">Datos borrados correctamente.</p>
+          )}
+        </div>
       </section>
     </main>
   );

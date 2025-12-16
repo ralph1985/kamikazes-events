@@ -35,6 +35,13 @@ export function saveEvent(eventId: string) {
   localStorage.setItem(SELECTED_EVENT_KEY, eventId);
 }
 
+export function clearClientData() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(CLIENT_ID_KEY);
+  localStorage.removeItem(VOTER_NAME_KEY);
+  localStorage.removeItem(SELECTED_EVENT_KEY);
+}
+
 export const localStorageKeys = {
   clientId: CLIENT_ID_KEY,
   voterName: VOTER_NAME_KEY,
