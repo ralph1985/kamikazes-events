@@ -85,9 +85,7 @@ export default function SettingsPage() {
           Define tu nombre y el evento activo. El ID del cliente se guarda al acceder por primera
           vez y se mantiene para reemplazar votos.
         </p>
-        <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-          <span className="tag">ID: {clientId ? clientId : '—'}</span>
-        </div>
+        <div className="flex flex-wrap gap-2 text-xs text-slate-300"></div>
       </header>
 
       <section className="card space-y-4">

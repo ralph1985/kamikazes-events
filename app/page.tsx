@@ -34,6 +34,13 @@ export default function Page() {
     () => events.find((event) => event.id === selectedEvent),
     [events, selectedEvent]
   );
+  const votesByDay = useMemo(() => {
+    const map: Record<string, number> = {};
+    results.forEach((item) => {
+      map[item.day] = item.votes;
+    });
+    return map;
+  }, [results]);
   const windowStartDate = useMemo(
     () => parseDayKey(selectedEventData?.window.start ?? '2026-01-07'),
     [selectedEventData?.window.start]
@@ -209,35 +216,29 @@ export default function Page() {
         <div className="flex flex-wrap gap-2 text-xs text-slate-300">
           <span className="tag">Evento: {events.find((e) => e.id === selectedEvent)?.name || '—'}</span>
           <span className="tag">Nombre: {voterName || 'Pendiente'}</span>
-          <span className="tag">ID: {clientId ? clientId.slice(0, 6) : '—'}</span>
         </div>
       </header>
 
-      <section className="card space-y-4">
-        <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-          <span className="tag">
-            Ventanilla:{' '}
-            {selectedEventData
-              ? `${selectedEventData.window.start} - ${selectedEventData.window.end}`
-              : '—'}
-          </span>
-          <span className="tag">Solo fines de semana</span>
-          <span className="tag">Configura evento y nombre en Preferencias</span>
-        </div>
+      <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+        <span className="tag">
+          {selectedEventData ? `${selectedEventData.window.start} - ${selectedEventData.window.end}` : '—'}
+        </span>
+        <span className="tag">Solo fines de semana</span>
+        <span className="tag">Configura evento y nombre en Preferencias</span>
+      </div>
 
-        {!voterName && (
-          <p className="text-red-300 text-sm">
-            El nombre es obligatorio para votar. Ve a <Link href="/settings">Preferencias</Link> para
-            configurarlo.
-          </p>
-        )}
-      </section>
+      {!voterName && (
+        <p className="text-red-300 text-sm">
+          El nombre es obligatorio para votar. Ve a <Link href="/settings">Preferencias</Link> para configurarlo.
+        </p>
+      )}
 
       <Calendar
         selected={selectedDates}
         onSelect={(dates) => setSelectedDates(dates)}
         fromDate={windowStartDate}
         toDate={windowEndDate}
+        dayVotes={votesByDay}
         windowLabel={
           selectedEventData
             ? `${selectedEventData.window.start} - ${selectedEventData.window.end}`

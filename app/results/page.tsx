@@ -102,7 +102,6 @@ export default function ResultsPage() {
         <div className="flex flex-wrap gap-2 text-xs text-slate-300">
           <span className="tag">Evento: {events.find((e) => e.id === selectedEvent)?.name || '—'}</span>
           <span className="tag">Nombre: {voterName || 'Pendiente'}</span>
-          <span className="tag">ID: {clientId ? clientId.slice(0, 6) : '—'}</span>
         </div>
       </header>
 
