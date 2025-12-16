@@ -11,8 +11,8 @@ import {
   saveEvent,
 } from "../lib/client";
 import type { EventItem, VoteResult } from "../lib/storage/StorageDriver";
-import { Header } from "../components/Header";
-import { PageNav } from "../components/PageNav";
+import { DescriptionCard } from "../components/DescriptionCard";
+import { HeaderBar } from "../components/HeaderBar";
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -133,20 +133,7 @@ export default function ResultsPage() {
 
   return (
     <main className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
-      <Header
-        title="Resultados"
-        subtitle="Resultados por evento"
-        description={`Consulta las fechas más votadas. Ventana activa: ${
-          selectedEventData
-            ? `${selectedEventData.window.start} - ${selectedEventData.window.end}`
-            : "—"
-        }`}
-        chips={[
-          `Evento: ${events.find((e) => e.id === selectedEvent)?.name || "—"}`,
-          `Nombre: ${voterName || "Pendiente"}`,
-        ]}
-      />
-      <PageNav
+      <HeaderBar
         label="Resultados"
         links={[
           { href: "/", label: "Votar" },
@@ -156,6 +143,18 @@ export default function ResultsPage() {
             icon: <span className="inline-flex h-4 w-4 items-center justify-center">⚙️</span>,
             ariaLabel: "Preferencias",
           },
+        ]}
+      />
+      <DescriptionCard
+        subtitle="Resultados por evento"
+        description={`Consulta las fechas más votadas. Ventana activa: ${
+          selectedEventData
+            ? `${selectedEventData.window.start} - ${selectedEventData.window.end}`
+            : "—"
+        }`}
+        chips={[
+          `Evento: ${events.find((e) => e.id === selectedEvent)?.name || "—"}`,
+          `Nombre: ${voterName || "Pendiente"}`,
         ]}
       />
 

@@ -21,8 +21,8 @@ import {
   saveName,
 } from "./lib/client";
 import { LoadingOverlay } from "./components/LoadingOverlay";
-import { Header } from "./components/Header";
-import { PageNav } from "./components/PageNav";
+import { DescriptionCard } from "./components/DescriptionCard";
+import { HeaderBar } from "./components/HeaderBar";
 
 type VoteState = "idle" | "loading" | "success" | "error";
 
@@ -234,16 +234,7 @@ export default function Page() {
   return (
     <main className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
       <LoadingOverlay visible={initialLoading} />
-      <Header
-        title="Votar"
-        subtitle="Vota el día del evento"
-        description="Marca tus días disponibles; el voto se actualiza al instante al tocar el calendario."
-        chips={[
-          `Evento: ${events.find((e) => e.id === selectedEvent)?.name || "—"}`,
-          `Nombre: ${voterName || "Pendiente"}`,
-        ]}
-      />
-      <PageNav
+      <HeaderBar
         label="Votar"
         links={[
           { href: "/results", label: "Resultados" },
@@ -253,6 +244,14 @@ export default function Page() {
             icon: <span className="inline-flex h-4 w-4 items-center justify-center">⚙️</span>,
             ariaLabel: "Preferencias",
           },
+        ]}
+      />
+      <DescriptionCard
+        subtitle="Vota el día del evento"
+        description="Marca tus días disponibles; el voto se actualiza al instante al tocar el calendario."
+        chips={[
+          `Evento: ${events.find((e) => e.id === selectedEvent)?.name || "—"}`,
+          `Nombre: ${voterName || "Pendiente"}`,
         ]}
       />
 
