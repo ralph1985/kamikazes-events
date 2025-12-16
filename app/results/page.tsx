@@ -132,20 +132,22 @@ export default function ResultsPage() {
 
   return (
     <main className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
-      <header className="space-y-3">
-        <div className="flex items-center gap-3">
-          <p className="text-emerald-400 text-sm font-semibold tracking-wide uppercase">
-            kamikazes-events · Resultados
+      <header className="space-y-3 bg-[#0b2447] border border-blue-500/70 rounded-2xl p-4 shadow-md text-slate-50">
+        <div className="flex items-center gap-3 justify-between">
+          <p className="text-sm font-semibold tracking-wide uppercase leading-tight text-slate-50">
+            kamikazes-events
+            <br />
+            Resultados
           </p>
           <nav className="flex gap-2 text-sm items-center">
             <Link
-              className="tag"
+              className="tag bg-white/10 border-blue-400 text-slate-50"
               href="/"
             >
               Votar
             </Link>
             <Link
-              className="tag"
+              className="tag bg-white/10 border-blue-400 text-slate-50"
               href="/settings"
               aria-label="Preferencias"
               title="Preferencias"
@@ -159,22 +161,23 @@ export default function ResultsPage() {
         <h1 className="text-3xl font-bold text-slate-50 leading-tight">
           Resultados por evento
         </h1>
-        <p className="text-slate-300 text-sm">
-          Consulta las fechas más votadas. La ventana de voto es{" "}
+        <p className="text-slate-100/80 text-sm">
+          Consulta las fechas más votadas. Ventana activa:{" "}
           {selectedEventData
             ? `${selectedEventData.window.start} - ${selectedEventData.window.end}`
-            : "—"}{" "}
-          (solo fines de semana).
+            : "—"}
         </p>
-        <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-          <span className="tag">
+        <div className="flex flex-wrap gap-2 text-xs text-slate-50">
+          <span className="tag bg-white/10 border-blue-400 text-slate-50">
             Evento: {events.find((e) => e.id === selectedEvent)?.name || "—"}
           </span>
-          <span className="tag">Nombre: {voterName || "Pendiente"}</span>
+          <span className="tag bg-white/10 border-blue-400 text-slate-50">
+            Nombre: {voterName || "Pendiente"}
+          </span>
         </div>
       </header>
 
-      <section className="card space-y-4">
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 space-y-4 shadow-lg">
         <EventSelect
           events={events}
           value={selectedEvent}
@@ -188,12 +191,11 @@ export default function ResultsPage() {
               ? `${selectedEventData.window.start} - ${selectedEventData.window.end}`
               : "—"}
           </span>
-          <span className="tag">Solo fines de semana</span>
           <span className="tag">Resultados ordenados por votos y fecha</span>
         </div>
       </section>
 
-      <section className="card space-y-3">
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 space-y-3 shadow-lg">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-400">

@@ -232,20 +232,22 @@ export default function Page() {
   return (
     <main className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
       <LoadingOverlay visible={initialLoading} />
-      <header className="space-y-3">
-        <div className="flex items-center gap-3">
-          <p className="text-emerald-400 text-sm font-semibold tracking-wide uppercase">
-            kamikazes-events · Votar
+      <header className="space-y-3 bg-[#0b2447] border border-blue-500/70 rounded-2xl p-4 shadow-md text-slate-50">
+        <div className="flex items-center gap-3 justify-between">
+          <p className="text-sm font-semibold tracking-wide uppercase leading-tight text-slate-50">
+            kamikazes-events
+            <br />
+            Votar
           </p>
           <nav className="flex gap-2 text-sm items-center">
             <Link
-              className="tag"
+              className="tag bg-white/10 border-blue-400 text-slate-50"
               href="/results"
             >
               Resultados
             </Link>
             <Link
-              className="tag"
+              className="tag bg-white/10 border-blue-400 text-slate-50"
               href="/settings"
               aria-label="Preferencias"
               title="Preferencias"
@@ -257,15 +259,17 @@ export default function Page() {
         <h1 className="text-3xl font-bold text-slate-50 leading-tight">
           Vota el día del evento
         </h1>
-        <p className="text-slate-300 text-sm">
+        <p className="text-slate-100/80 text-sm">
           Elige tu evento, escribe tu nombre y marca los días que mejor te
           encajan. Los resultados se actualizan al instante.
         </p>
-        <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-          <span className="tag">
+        <div className="flex flex-wrap gap-2 text-xs text-slate-50">
+          <span className="tag bg-white/10 border-blue-400 text-slate-50">
             Evento: {events.find((e) => e.id === selectedEvent)?.name || "—"}
           </span>
-          <span className="tag">Nombre: {voterName || "Pendiente"}</span>
+          <span className="tag bg-white/10 border-blue-400 text-slate-50">
+            Nombre: {voterName || "Pendiente"}
+          </span>
         </div>
       </header>
 

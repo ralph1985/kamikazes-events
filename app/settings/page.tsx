@@ -95,37 +95,31 @@ export default function SettingsPage() {
 
   return (
     <main className="max-w-md mx-auto px-4 py-8 sm:py-12 space-y-6">
-      <header className="space-y-3">
-        <div className="flex items-center gap-3">
-          <p className="text-emerald-400 text-sm font-semibold tracking-wide uppercase">
-            kamikazes-events · Preferencias
+      <header className="space-y-3 bg-[#0b2447] border border-blue-500/70 rounded-2xl p-4 shadow-md text-slate-50">
+        <div className="flex items-center gap-3 justify-between">
+          <p className="text-sm font-semibold tracking-wide uppercase leading-tight text-slate-50">
+            kamikazes-events
+            <br />
+            Preferencias
           </p>
           <nav className="flex gap-2 text-sm items-center">
-            <Link className="tag" href="/">
+            <Link className="tag bg-white/10 border-blue-400 text-slate-50" href="/">
               Votar
             </Link>
-            <Link className="tag" href="/results">
+            <Link className="tag bg-white/10 border-blue-400 text-slate-50" href="/results">
               Resultados
-            </Link>
-            <Link
-              className="tag"
-              href="/settings"
-              aria-label="Preferencias"
-              title="Preferencias"
-            >
-              <span className="inline-flex h-4 w-4 items-center justify-center">⚙️</span>
             </Link>
           </nav>
         </div>
         <h1 className="text-3xl font-bold text-slate-50 leading-tight">Configura tu perfil</h1>
-        <p className="text-slate-300 text-sm">
+        <p className="text-slate-100/80 text-sm">
           Define tu nombre y el evento activo. El ID del cliente se guarda al acceder por primera
           vez y se mantiene para reemplazar votos.
         </p>
-        <div className="flex flex-wrap gap-2 text-xs text-slate-300"></div>
+        <div className="flex flex-wrap gap-2 text-xs text-slate-50"></div>
       </header>
 
-      <section className="card space-y-4">
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 space-y-4 shadow-lg">
         <form className="space-y-4" onSubmit={handleSave}>
           <div className="field">
             <label className="text-sm text-slate-300">Tu nombre (obligatorio)</label>
