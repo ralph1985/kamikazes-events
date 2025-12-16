@@ -1,0 +1,42 @@
+const CLIENT_ID_KEY = 'kamikazes:clientId';
+const VOTER_NAME_KEY = 'voterName';
+const SELECTED_EVENT_KEY = 'selectedEventId';
+
+function randomId(): string {
+  return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 10);
+}
+
+export function getClientId(): string {
+  if (typeof window === 'undefined') return '';
+  const existing = localStorage.getItem(CLIENT_ID_KEY);
+  if (existing) return existing;
+  const id = randomId();
+  localStorage.setItem(CLIENT_ID_KEY, id);
+  return id;
+}
+
+export function getStoredName(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem(VOTER_NAME_KEY) ?? '';
+}
+
+export function saveName(name: string) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(VOTER_NAME_KEY, name);
+}
+
+export function getStoredEvent(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem(SELECTED_EVENT_KEY) ?? '';
+}
+
+export function saveEvent(eventId: string) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(SELECTED_EVENT_KEY, eventId);
+}
+
+export const localStorageKeys = {
+  clientId: CLIENT_ID_KEY,
+  voterName: VOTER_NAME_KEY,
+  selectedEvent: SELECTED_EVENT_KEY
+};

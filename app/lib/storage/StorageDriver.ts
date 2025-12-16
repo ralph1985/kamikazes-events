@@ -1,6 +1,10 @@
 export type EventItem = {
   id: string;
   name: string;
+  window: {
+    start: string; // YYYY-MM-DD
+    end: string; // YYYY-MM-DD
+  };
 };
 
 export type VoteResult = {
@@ -10,7 +14,8 @@ export type VoteResult = {
 
 export interface StorageDriver {
   getEvents(): Promise<EventItem[]>;
-  createEvent(name: string): Promise<EventItem>;
+  createEvent(name: string, window?: EventItem['window']): Promise<EventItem>;
   getResults(eventId: string): Promise<VoteResult[]>;
-  vote(eventId: string, name: string, day: string): Promise<void>;
+  vote(eventId: string, voterId: string, name: string, days: string[]): Promise<void>;
+  getSelection(eventId: string, voterId: string): Promise<string[]>;
 }

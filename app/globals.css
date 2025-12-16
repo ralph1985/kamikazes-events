@@ -55,3 +55,8 @@ a {
 .list-item {
   @apply py-3 flex items-center justify-between;
 }
+
+/* Calendario custom */
+.calendar-grid {
+  width: 100%;
+}

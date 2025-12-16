@@ -3,10 +3,11 @@
 Mini webapp mobile-first para votar qué día celebrar un evento. Construida con Next.js (App Router), TypeScript estricto, Tailwind CSS, React Day Picker y persistencia con Vercel KV (o mock en memoria en local).
 
 ## Funcionalidad
-- Selector de evento (incluye por defecto **Babyshower Mullor-Gallego V2**, id `babyshower-mullor-gallego-v2`).
-- Input de nombre obligatorio (se guarda en `localStorage`).
-- Calendario (límite hoy → +30 días, semana empieza en lunes, selección única).
-- Voto con feedback y refresco automático de resultados.
+- Selector de evento (incluye por defecto **Babyshower Mullor-Gallego V2**, id `babyshower-mullor-gallego-v2`), configurable desde la vista de Preferencias. Cada evento trae su propia ventana de voto.
+- Nombre obligatorio (se guarda en `localStorage` y se vincula a un `clientId` generado en la primera visita).
+- Calendario (ventana por evento, selección múltiple, solo fines de semana).
+- Voto con feedback y refresco automático de resultados; un voto por persona (se reemplaza si cambias la selección).
+- Vistas: `/` Votar, `/results` Resultados, `/settings` Preferencias (evento + nombre).
 - Resultados ordenados por número de votos desc (empates por fecha asc).
 - Persistencia: auto-selección de driver → KV si hay variables, mock en memoria si no.
 

@@ -1,62 +1,89 @@
 "use client";
 
-import { DayPicker } from 'react-day-picker';
-import { es } from 'date-fns/locale';
+import { addDays, eachDayOfInterval, endOfWeek, format, isAfter, isBefore, isSameDay, isWeekend, startOfWeek } from 'date-fns';
 import { clsx } from 'clsx';
+import { useMemo } from 'react';
 
 type Props = {
-  selected?: Date;
-  onSelect: (date: Date | undefined) => void;
+  selected?: Date[];
+  onSelect: (dates: Date[]) => void;
   fromDate: Date;
   toDate: Date;
+  windowLabel?: string;
 };
 
-export function Calendar({ selected, onSelect, fromDate, toDate }: Props) {
+export function Calendar({ selected = [], onSelect, fromDate, toDate, windowLabel }: Props) {
+  const weeks = useMemo(() => {
+    const start = startOfWeek(fromDate, { weekStartsOn: 1 });
+    const end = endOfWeek(toDate, { weekStartsOn: 1 });
+    const days = eachDayOfInterval({ start, end });
+    const grouped: Date[][] = [];
+    for (let i = 0; i < days.length; i += 7) {
+      grouped.push(days.slice(i, i + 7));
+    }
+    return grouped;
+  }, [fromDate, toDate]);
+
+  const toggleDate = (day: Date) => {
+    const isSelected = selected.some((d) => isSameDay(d, day));
+    if (isSelected) {
+      onSelect(selected.filter((d) => !isSameDay(d, day)));
+    } else {
+      onSelect([...selected, day]);
+    }
+  };
+
+  const isDisabled = (day: Date) =>
+    isBefore(day, fromDate) || isAfter(day, toDate) || !isWeekend(day);
+
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-slate-400">Calendario</p>
-          <p className="text-lg font-semibold text-slate-100">Elige un día</p>
+          <p className="text-lg font-semibold text-slate-100">Elige tus días</p>
         </div>
-        <span className="tag">Rango 30 días</span>
+        <span className="tag">{windowLabel ?? 'Rango activo'}</span>
       </div>
 
-      <DayPicker
-        mode="single"
-        locale={es}
-        weekStartsOn={1}
-        fromDate={fromDate}
-        toDate={toDate}
-        selected={selected}
-        onSelect={onSelect}
-        showOutsideDays
-        classNames={{
-          root: 'text-slate-100',
-          months: 'flex flex-col',
-          month: 'space-y-3',
-          caption: 'flex justify-between items-center text-slate-200',
-          caption_label: 'text-base font-semibold',
-          nav: 'flex gap-2',
-          nav_button: 'w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-100',
-          nav_button_previous: 'flex items-center justify-center',
-          nav_button_next: 'flex items-center justify-center',
-          table: 'w-full border-collapse',
-          head_row: 'grid grid-cols-7 text-sm text-slate-400',
-          head_cell: 'text-center pb-2',
-          row: 'grid grid-cols-7',
-          cell: 'aspect-square p-1',
-          day: clsx(
-            'w-full h-full flex items-center justify-center rounded-xl text-sm font-semibold transition',
-            'hover:bg-emerald-500 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400'
-          ),
-          day_selected: 'bg-emerald-500 text-slate-900 shadow-lg',
-          day_outside: 'text-slate-600 opacity-60',
-          day_disabled: 'text-slate-700 opacity-40 cursor-not-allowed',
-          day_today: 'border border-emerald-400',
-          week: 'contents'
-        }}
-      />
+      <div className="space-y-2">
+        <div className="grid grid-cols-7 text-center text-xs text-slate-400 uppercase">
+          {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((label) => (
+            <span key={label} className="py-1">
+              {label}
+            </span>
+          ))}
+        </div>
+
+        {weeks.map((week, index) => (
+          <div key={index} className="grid grid-cols-7 gap-2">
+            {week.map((day) => {
+              const disabled = isDisabled(day);
+              const active = selected.some((d) => isSameDay(d, day));
+              const monthChange = day.getDate() <= 7; // show month tag near start
+              return (
+                <button
+                  key={day.toISOString()}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => toggleDate(day)}
+                  className={clsx(
+                    'h-12 rounded-lg border text-sm font-semibold transition',
+                    'flex flex-col items-center justify-center gap-0.5',
+                    active
+                      ? 'bg-emerald-500 text-slate-900 border-emerald-400 shadow-lg'
+                      : 'border-slate-700 bg-slate-800/70 text-slate-100 hover:border-emerald-400',
+                    disabled && 'cursor-not-allowed opacity-40 hover:border-slate-700'
+                  )}
+                >
+                  <span>{format(day, 'd')}</span>
+                  {monthChange && <span className="text-[10px] uppercase">{format(day, 'MMM')}</span>}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

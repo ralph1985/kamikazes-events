@@ -18,13 +18,19 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => null);
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
+    const window =
+      body?.window &&
+      typeof body.window.start === 'string' &&
+      typeof body.window.end === 'string'
+        ? { start: body.window.start, end: body.window.end }
+        : undefined;
 
     if (!name) {
       return NextResponse.json({ message: 'El nombre del evento es obligatorio' }, { status: 400 });
     }
 
     const driver = await ensureDefaultEvent();
-    const event = await driver.createEvent(name);
+    const event = await driver.createEvent(name, window);
     return NextResponse.json(event);
   } catch (error) {
     console.error('POST /api/events', error);
