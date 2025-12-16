@@ -293,8 +293,7 @@ export default function Page() {
       <section className="space-y-3">
         {voteState === "success" && (
           <p className="text-emerald-300 text-sm">
-            ¡Voto registrado! Si cambias de opinión, toca otro día para
-            reemplazar tu voto.
+            ¡Voto registrado! Añade o quita días tocando en el calendario; la selección se actualiza al momento.
           </p>
         )}
         {voteState === "error" && (
