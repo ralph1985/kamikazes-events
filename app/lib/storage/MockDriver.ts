@@ -101,6 +101,11 @@ export class MockDriver implements StorageDriver {
     return voterMap.get(voterKey) ?? [];
   }
 
+  async setVoterName(eventId: string, voterId: string, name: string): Promise<void> {
+    const voterKey = this.normalizeId(voterId);
+    this.voterNames.set(voterKey, name);
+  }
+
   private normalizeId(id: string): string {
     return slugify(id.trim().toLowerCase()) || 'anon';
   }

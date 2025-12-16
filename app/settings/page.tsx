@@ -53,7 +53,7 @@ export default function SettingsPage() {
 
   const router = useRouter();
 
-  const handleSave = (event: FormEvent) => {
+  const handleSave = async (event: FormEvent) => {
     event.preventDefault();
     if (!voterName.trim()) {
       setErrorMessage('El nombre es obligatorio');
@@ -64,9 +64,26 @@ export default function SettingsPage() {
       return;
     }
     setStatus('saving');
+    const nameToSave = voterName.trim();
     try {
-      saveName(voterName.trim());
+      saveName(nameToSave);
       saveEvent(selectedEvent);
+
+      // sincronizar nombre en votos existentes
+      if (events.length > 0 && clientId) {
+        await fetch('/api/voter-name', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            voterId: clientId,
+            name: nameToSave,
+            eventIds: events.map((event) => event.id)
+          })
+        }).catch((error) => {
+          console.error('sync voter name failed', error);
+        });
+      }
+
       setStatus('saved');
       setTimeout(() => setStatus('idle'), 2000);
       router.push('/');

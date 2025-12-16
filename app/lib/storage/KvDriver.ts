@@ -99,6 +99,11 @@ export class KvDriver implements StorageDriver {
     return matches;
   }
 
+  async setVoterName(eventId: string, voterId: string, name: string): Promise<void> {
+    const voterKey = this.buildVoterKey(voterId);
+    await kv.set(this.voterNameKey(eventId, voterKey), name);
+  }
+
   private buildVoterKey(raw: string): string {
     return slugify(raw.trim().toLowerCase()) || 'anon';
   }

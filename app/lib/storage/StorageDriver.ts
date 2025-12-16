@@ -19,4 +19,5 @@ export interface StorageDriver {
   vote(eventId: string, voterId: string, name: string, days: string[]): Promise<void>;
   getSelection(eventId: string, voterId: string): Promise<string[]>;
   getVotersByDay(eventId: string, day: string): Promise<string[]>;
+  setVoterName(eventId: string, voterId: string, name: string): Promise<void>;
 }
