@@ -73,6 +73,7 @@ export class MockDriver implements StorageDriver {
   }
 
   async getResults(eventId: string): Promise<VoteResult[]> {
+    this.recomputeCounts(eventId);
     const counts = this.votes.get(eventId) ?? new Map();
     return Array.from(counts.entries())
       .map(([day, votes]) => ({ day, votes }))
@@ -88,17 +89,9 @@ export class MockDriver implements StorageDriver {
     const voterMap = this.voterSelections.get(eventId) ?? new Map();
     const previous = voterMap.get(voterKey) ?? [];
 
-    previous.forEach((day: string) => {
-      counts.set(day, Math.max(0, (counts.get(day) ?? 0) - 1));
-    });
-
-    days.forEach((day) => {
-      counts.set(day, (counts.get(day) ?? 0) + 1);
-    });
-
     voterMap.set(voterKey, days);
     this.voterSelections.set(eventId, voterMap);
-    this.votes.set(eventId, counts);
+    this.recomputeCounts(eventId);
   }
 
   async getSelection(eventId: string, voterId: string): Promise<string[]> {
@@ -109,5 +102,14 @@ export class MockDriver implements StorageDriver {
 
   private normalizeId(id: string): string {
     return slugify(id.trim().toLowerCase()) || 'anon';
+  }
+
+  private recomputeCounts(eventId: string) {
+    const voterMap = this.voterSelections.get(eventId) ?? new Map();
+    const counts: Counts = new Map();
+    voterMap.forEach((days) => {
+      days.forEach((day) => counts.set(day, (counts.get(day) ?? 0) + 1));
+    });
+    this.votes.set(eventId, counts);
   }
 }

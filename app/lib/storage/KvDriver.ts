@@ -4,6 +4,18 @@ import { slugify } from '../slug';
 import type { EventItem, StorageDriver, VoteResult } from './StorageDriver';
 
 export class KvDriver implements StorageDriver {
+  private countsKey(eventId: string) {
+    return `event:${eventId}:counts`;
+  }
+
+  private voterStoreKey(eventId: string, voterKey: string) {
+    return `event:${eventId}:voter:${voterKey}`;
+  }
+
+  private votersSetKey(eventId: string) {
+    return `event:${eventId}:voters`;
+  }
+
   async getEvents(): Promise<EventItem[]> {
     const entries = (await kv.hgetall<Record<string, string>>('events:list')) || {};
     const events: EventItem[] = Object.entries(entries).map(([id, value]) => {
@@ -46,7 +58,8 @@ export class KvDriver implements StorageDriver {
   }
 
   async getResults(eventId: string): Promise<VoteResult[]> {
-    const counts = (await kv.hgetall<Record<string, number>>(`event:${eventId}:counts`)) || {};
+    await this.recomputeCounts(eventId);
+    const counts = (await kv.hgetall<Record<string, number>>(this.countsKey(eventId))) || {};
     return Object.entries(counts)
       .map(([day, votes]) => ({
         day: formatDayKey(parseDayKey(day)),
@@ -73,6 +86,8 @@ export class KvDriver implements StorageDriver {
     }
 
     await kv.set(voterStoreKey, days);
+    await kv.sadd(this.votersSetKey(eventId), voterKey);
+    await this.recomputeCounts(eventId);
   }
 
   async getSelection(eventId: string, voterId: string): Promise<string[]> {
@@ -85,16 +100,29 @@ export class KvDriver implements StorageDriver {
     return slugify(raw.trim().toLowerCase()) || 'anon';
   }
 
-  private voterStoreKey(eventId: string, voterKey: string): string {
-    return `event:${eventId}:voter:${voterKey}`;
-  }
-
   private isSerialized(value: string): boolean {
     try {
       const parsed = JSON.parse(value);
       return Boolean(parsed?.window?.start && parsed?.window?.end);
     } catch {
       return false;
+    }
+  }
+
+  private async recomputeCounts(eventId: string) {
+    const voterKeys = (await kv.smembers<string>(this.votersSetKey(eventId))) || [];
+    const aggregate: Record<string, number> = {};
+
+    for (const voterKey of voterKeys) {
+      const selection = (await kv.get<string[]>(this.voterStoreKey(eventId, voterKey))) || [];
+      selection.forEach((day) => {
+        aggregate[day] = (aggregate[day] ?? 0) + 1;
+      });
+    }
+
+    await kv.del(this.countsKey(eventId));
+    if (Object.keys(aggregate).length > 0) {
+      await kv.hset(this.countsKey(eventId), aggregate);
     }
   }
 }
