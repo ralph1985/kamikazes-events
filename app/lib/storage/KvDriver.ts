@@ -73,7 +73,7 @@ export class KvDriver implements StorageDriver {
   }
 
   async getVotersByDay(eventId: string, day: string): Promise<string[]> {
-    const voterKeys = (await kv.smembers(this.votersSetKey(eventId))) || [];
+    const voterKeys = await this.getVoterKeys(eventId);
     const matches: string[] = [];
     for (const voterKey of voterKeys) {
       const selection = (await kv.get<string[]>(this.voterStoreKey(eventId, voterKey))) || [];
@@ -106,7 +106,7 @@ export class KvDriver implements StorageDriver {
   }
 
   private async aggregateCounts(eventId: string) {
-    const voterKeys = (await kv.smembers(this.votersSetKey(eventId))) || [];
+    const voterKeys = await this.getVoterKeys(eventId);
     const aggregate: Record<string, number> = {};
 
     for (const voterKey of voterKeys) {
@@ -116,6 +116,21 @@ export class KvDriver implements StorageDriver {
       });
     }
     return aggregate;
+  }
+
+  private async getVoterKeys(eventId: string): Promise<string[]> {
+    const fromSet = (await kv.smembers(this.votersSetKey(eventId))) || [];
+    // Fallback: buscar claves directas por si el set no está completo (datos antiguos).
+    let fromKeys: string[] = [];
+    try {
+      const keys = await kv.keys(`event:${eventId}:voter:*`);
+      fromKeys = keys
+        .map((key) => key.split(':').pop() || '')
+        .filter((value) => value.trim().length > 0);
+    } catch {
+      // ignore if keys is not supported
+    }
+    return Array.from(new Set([...fromSet, ...fromKeys]));
   }
 
   private voterStoreKey(eventId: string, voterKey: string) {
