@@ -14,6 +14,7 @@ import {
 import type { EventItem, VoteResult, VoterSelection } from "../lib/storage/StorageDriver";
 import { DescriptionCard } from "../components/DescriptionCard";
 import { HeaderBar } from "../components/HeaderBar";
+import { clearCacheByPrefix, getCachedJson, setCachedJson } from "../lib/cache";
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -42,25 +43,42 @@ export default function ResultsPage() {
   const [viewMode, setViewMode] = useState<"day" | "person">("day");
 
   const refreshResults = useCallback(async (eventId: string) => {
-    const res = await fetch(
-      `/api/results?eventId=${encodeURIComponent(eventId)}`,
-      {
-        cache: "no-store",
-      }
-    );
+    const cacheKey = `/api/results?eventId=${encodeURIComponent(eventId)}`;
+    const cached = getCachedJson<VoteResult[]>(cacheKey);
+    if (cached) {
+      setResults(cached);
+      return;
+    }
+    const res = await fetch(cacheKey, {
+      cache: "no-store",
+    });
     if (!res.ok) throw new Error("No se pudieron cargar los resultados");
     const data: VoteResult[] = await res.json();
+    setCachedJson(cacheKey, data);
     setResults(data);
   }, []);
 
   const refreshPeople = useCallback(async (eventId: string) => {
-    const res = await fetch(
-      `/api/voters/people?eventId=${encodeURIComponent(eventId)}`,
-      { cache: "no-store" }
-    );
+    const cacheKey = `/api/voters/people?eventId=${encodeURIComponent(eventId)}`;
+    const cached = getCachedJson<{ voters: VoterSelection[] }>(cacheKey);
+    const allowedSet = new Set(allowedDayKeysForEvent);
+    if (cached) {
+      const filteredCached = cached.voters
+        .map((voter) => ({
+          ...voter,
+          days: voter.days.filter((day) => allowedSet.has(day)),
+        }))
+        .filter((voter) => voter.days.length > 0);
+      const sortedCached = [...filteredCached].sort((a, b) =>
+        a.name.localeCompare(b.name, "es", { sensitivity: "base" })
+      );
+      setPeopleResults(sortedCached);
+      return;
+    }
+
+    const res = await fetch(cacheKey, { cache: "no-store" });
     if (!res.ok) throw new Error("No se pudieron cargar los votos por persona");
     const data: { voters: VoterSelection[] } = await res.json();
-    const allowedSet = new Set(allowedDayKeysForEvent);
     const filtered = data.voters
       .map((voter) => ({
         ...voter,
@@ -70,6 +88,7 @@ export default function ResultsPage() {
     const sorted = [...filtered].sort((a, b) =>
       a.name.localeCompare(b.name, "es", { sensitivity: "base" })
     );
+    setCachedJson(cacheKey, { voters: data.voters });
     setPeopleResults(sorted);
   }, [allowedDayKeysForEvent]);
 
@@ -208,6 +227,13 @@ export default function ResultsPage() {
               : "—"}
           </span>
           <span className="tag">Resultados ordenados por votos y fecha</span>
+          <button
+            className="tag"
+            type="button"
+            onClick={() => clearCacheByPrefix("/api")}
+          >
+            Refrescar caché
+          </button>
         </div>
       </section>
 

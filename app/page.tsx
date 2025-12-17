@@ -22,6 +22,7 @@ import { LoadingOverlay } from "./components/LoadingOverlay";
 import { DescriptionCard } from "./components/DescriptionCard";
 import { HeaderBar } from "./components/HeaderBar";
 import Link from "next/link";
+import { clearCacheByPrefix, getCachedJson, setCachedJson } from "./lib/cache";
 
 type VoteState = "idle" | "loading" | "success" | "error";
 
@@ -76,14 +77,17 @@ export default function Page() {
   }, [allowedDayKeysForEvent, results]);
 
   const refreshResults = useCallback(async (eventId: string) => {
-    const res = await fetch(
-      `/api/results?eventId=${encodeURIComponent(eventId)}`,
-      {
-        cache: "no-store",
-      }
-    );
+    const cacheKey = `/api/results?eventId=${encodeURIComponent(eventId)}`;
+    const cached = getCachedJson<VoteResult[]>(cacheKey);
+    if (cached) {
+      setResults(cached);
+      return;
+    }
+
+    const res = await fetch(cacheKey, { cache: "no-store" });
     if (!res.ok) throw new Error("No se pudieron cargar los resultados");
     const data: VoteResult[] = await res.json();
+    setCachedJson(cacheKey, data);
     setResults(data);
   }, []);
 
@@ -218,6 +222,8 @@ export default function Page() {
 
       saveName(voterName.trim());
       setVoteState("success");
+      clearCacheByPrefix("/api/results");
+      clearCacheByPrefix("/api/voters");
       await refreshResults(selectedEvent);
     } catch (error) {
       setSelectedDates(prevSelection);
