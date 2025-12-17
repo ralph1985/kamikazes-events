@@ -310,12 +310,12 @@ export default function ResultsPage() {
         {viewMode === "person" && peopleResults.length > 0 && (
           <div className="list">
             {peopleResults.map((person) => (
-              <div key={person.name} className="list-item flex-col items-start gap-1">
+              <div key={person.name} className="list-item flex-col items-center gap-2 text-center">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
                   <span className="text-slate-100 font-semibold">{person.name}</span>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs text-slate-300">
+                <div className="flex flex-wrap gap-2 justify-center text-xs text-slate-300">
                   {person.days.length === 0 ? (
                     <span className="tag">Sin días seleccionados</span>
                   ) : (
