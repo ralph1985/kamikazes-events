@@ -44,13 +44,6 @@ export default function Page() {
     () => events.find((event) => event.id === selectedEvent),
     [events, selectedEvent]
   );
-  const votesByDay = useMemo(() => {
-    const map: Record<string, number> = {};
-    results.forEach((item) => {
-      map[item.day] = item.votes;
-    });
-    return map;
-  }, [results]);
   const allowedDayKeysForEvent = useMemo(
     () =>
       allowedDaysWithinWindow(
@@ -71,6 +64,16 @@ export default function Page() {
       ? parseDayKey(last)
       : parseDayKey(selectedEventData?.window.end ?? "2026-03-01");
   }, [allowedDayKeysForEvent, selectedEventData?.window.end]);
+  const votesByDay = useMemo(() => {
+    const map: Record<string, number> = {};
+    const allowed = new Set(allowedDayKeysForEvent);
+    results.forEach((item) => {
+      if (allowed.has(item.day)) {
+        map[item.day] = item.votes;
+      }
+    });
+    return map;
+  }, [allowedDayKeysForEvent, results]);
 
   const refreshResults = useCallback(async (eventId: string) => {
     const res = await fetch(

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ensureDefaultEvent } from '../../../lib/storage';
+import { allowedDaysWithinWindow } from '../../../lib/dates';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -17,7 +18,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Evento no encontrado' }, { status: 400 });
     }
 
-    const voters = await driver.getVotersSelections(eventId);
+    const allowed = new Set(
+      allowedDaysWithinWindow(
+        events.find((event) => event.id === eventId)?.window.start ?? '',
+        events.find((event) => event.id === eventId)?.window.end ?? ''
+      )
+    );
+    const voters = (await driver.getVotersSelections(eventId)).map((voter) => ({
+      name: voter.name,
+      days: voter.days.filter((day) => allowed.has(day))
+    }));
     return NextResponse.json({ voters });
   } catch (error) {
     console.error('GET /api/voters/people', error);
