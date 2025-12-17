@@ -104,9 +104,15 @@ export default function ResultsPage() {
     const fetchEvents = async () => {
       setEventsLoading(true);
       try {
-        const res = await fetch("/api/events", { cache: "no-store" });
+        const cacheKey = "/api/events";
+        const cached = getCachedJson<EventItem[]>(cacheKey, 20 * 60 * 1000);
+        if (cached) {
+          setEvents(cached);
+        }
+        const res = await fetch(cacheKey, { cache: "no-store" });
         if (!res.ok) throw new Error("No se pudieron cargar los eventos");
         const data: EventItem[] = await res.json();
+        setCachedJson(cacheKey, data, 20 * 60 * 1000);
         setEvents(data);
         const storedEventId =
           typeof window !== "undefined" ? getStoredEvent() : null;

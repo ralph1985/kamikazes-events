@@ -13,6 +13,7 @@ import {
   saveEvent,
   saveName
 } from '../lib/client';
+import { getCachedJson, setCachedJson, clearCacheByPrefix } from '../lib/cache';
 import type { EventItem } from '../lib/storage/StorageDriver';
 
 export default function SettingsPage() {
@@ -35,9 +36,15 @@ export default function SettingsPage() {
     const fetchEvents = async () => {
       setEventsLoading(true);
       try {
-        const res = await fetch('/api/events', { cache: 'no-store' });
+        const cacheKey = '/api/events';
+        const cached = getCachedJson<EventItem[]>(cacheKey, 20 * 60 * 1000);
+        if (cached) {
+          setEvents(cached);
+        }
+        const res = await fetch(cacheKey, { cache: 'no-store' });
         if (!res.ok) throw new Error('No se pudieron cargar los eventos');
         const data: EventItem[] = await res.json();
+        setCachedJson(cacheKey, data, 20 * 60 * 1000);
         setEvents(data);
         const stored = typeof window !== 'undefined' ? getStoredEvent() : null;
         const defaultEvent = stored && data.some((e) => e.id === stored) ? stored : data[0]?.id ?? '';
@@ -175,6 +182,9 @@ export default function SettingsPage() {
                     })
                   )
                 );
+                clearCacheByPrefix('/api/results');
+                clearCacheByPrefix('/api/voters');
+                clearCacheByPrefix('/api/vote');
                 clearClientData();
                 setVoterName('');
                 setSelectedEvent(data[0]?.id ?? '');

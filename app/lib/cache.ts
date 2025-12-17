@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'cache:';
-const TTL_MS = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function canUseSessionStorage(): boolean {
   if (typeof window === 'undefined') return false;
@@ -13,13 +13,14 @@ function canUseSessionStorage(): boolean {
   }
 }
 
-export function getCachedJson<T>(key: string): T | null {
+export function getCachedJson<T>(key: string, ttlMs: number = DEFAULT_TTL_MS): T | null {
   if (!canUseSessionStorage()) return null;
   const raw = window.sessionStorage.getItem(`${CACHE_PREFIX}${key}`);
   if (!raw) return null;
   try {
-    const payload = JSON.parse(raw) as { ts: number; data: T };
-    if (Date.now() - payload.ts > TTL_MS) {
+    const payload = JSON.parse(raw) as { ts: number; data: T; ttl?: number };
+    const effectiveTtl = payload.ttl ?? ttlMs;
+    if (Date.now() - payload.ts > effectiveTtl) {
       window.sessionStorage.removeItem(`${CACHE_PREFIX}${key}`);
       return null;
     }
@@ -30,9 +31,9 @@ export function getCachedJson<T>(key: string): T | null {
   }
 }
 
-export function setCachedJson<T>(key: string, data: T) {
+export function setCachedJson<T>(key: string, data: T, ttlMs: number = DEFAULT_TTL_MS) {
   if (!canUseSessionStorage()) return;
-  const payload = JSON.stringify({ ts: Date.now(), data });
+  const payload = JSON.stringify({ ts: Date.now(), data, ttl: ttlMs });
   window.sessionStorage.setItem(`${CACHE_PREFIX}${key}`, payload);
 }
 
