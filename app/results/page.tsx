@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EventSelect } from "../components/EventSelect";
 import { formatDisplay } from "../lib/dates";
+import { allowedDaysWithinWindow } from "../lib/dates";
 import {
   getClientId,
   getStoredEvent,
@@ -26,6 +27,14 @@ export default function ResultsPage() {
   const [clientId, setClientId] = useState<string>("");
   const [voterName, setVoterName] = useState<string>("");
   const selectedEventData = events.find((e) => e.id === selectedEvent);
+  const allowedDayKeysForEvent = useMemo(
+    () =>
+      allowedDaysWithinWindow(
+        selectedEventData?.window.start ?? "",
+        selectedEventData?.window.end ?? ""
+      ),
+    [selectedEventData?.window.end, selectedEventData?.window.start]
+  );
   const [modalDay, setModalDay] = useState<string | null>(null);
   const [modalVoters, setModalVoters] = useState<string[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
@@ -51,12 +60,18 @@ export default function ResultsPage() {
     );
     if (!res.ok) throw new Error("No se pudieron cargar los votos por persona");
     const data: { voters: VoterSelection[] } = await res.json();
-    const filtered = data.voters.filter((voter) => voter.days.length > 0);
+    const allowedSet = new Set(allowedDayKeysForEvent);
+    const filtered = data.voters
+      .map((voter) => ({
+        ...voter,
+        days: voter.days.filter((day) => allowedSet.has(day)),
+      }))
+      .filter((voter) => voter.days.length > 0);
     const sorted = [...filtered].sort((a, b) =>
       a.name.localeCompare(b.name, "es", { sensitivity: "base" })
     );
     setPeopleResults(sorted);
-  }, []);
+  }, [allowedDayKeysForEvent]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
