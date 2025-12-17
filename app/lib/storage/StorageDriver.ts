@@ -12,6 +12,11 @@ export type VoteResult = {
   votes: number;
 };
 
+export type VoterSelection = {
+  name: string;
+  days: string[];
+};
+
 export interface StorageDriver {
   getEvents(): Promise<EventItem[]>;
   createEvent(name: string, window?: EventItem['window']): Promise<EventItem>;
@@ -20,4 +25,5 @@ export interface StorageDriver {
   getSelection(eventId: string, voterId: string): Promise<string[]>;
   getVotersByDay(eventId: string, day: string): Promise<string[]>;
   setVoterName(eventId: string, voterId: string, name: string): Promise<void>;
+  getVotersSelections(eventId: string): Promise<VoterSelection[]>;
 }

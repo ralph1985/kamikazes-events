@@ -104,6 +104,17 @@ export class KvDriver implements StorageDriver {
     await kv.set(this.voterNameKey(eventId, voterKey), name);
   }
 
+  async getVotersSelections(eventId: string) {
+    const voterKeys = (await kv.smembers(this.votersSetKey(eventId))) || [];
+    const voters: { name: string; days: string[] }[] = [];
+    for (const voterKey of voterKeys) {
+      const selection = (await kv.get<string[]>(this.voterStoreKey(eventId, voterKey))) || [];
+      const name = (await kv.get<string>(this.voterNameKey(eventId, voterKey))) || 'Anónimo';
+      voters.push({ name, days: selection });
+    }
+    return voters;
+  }
+
   private buildVoterKey(raw: string): string {
     return slugify(raw.trim().toLowerCase()) || 'anon';
   }

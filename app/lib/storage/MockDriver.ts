@@ -106,6 +106,15 @@ export class MockDriver implements StorageDriver {
     this.voterNames.set(voterKey, name);
   }
 
+  async getVotersSelections(eventId: string) {
+    const voterMap = this.voterSelections.get(eventId) ?? new Map();
+    const voters: { name: string; days: string[] }[] = [];
+    voterMap.forEach((days, voterKey) => {
+      voters.push({ name: this.voterNames.get(voterKey) ?? 'Anónimo', days });
+    });
+    return voters;
+  }
+
   private normalizeId(id: string): string {
     return slugify(id.trim().toLowerCase()) || 'anon';
   }

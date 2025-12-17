@@ -10,7 +10,7 @@ import {
   getStoredName,
   saveEvent,
 } from "../lib/client";
-import type { EventItem, VoteResult } from "../lib/storage/StorageDriver";
+import type { EventItem, VoteResult, VoterSelection } from "../lib/storage/StorageDriver";
 import { DescriptionCard } from "../components/DescriptionCard";
 import { HeaderBar } from "../components/HeaderBar";
 
@@ -20,6 +20,7 @@ export default function ResultsPage() {
   const [eventsLoading, setEventsLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<string>("");
   const [results, setResults] = useState<VoteResult[]>([]);
+  const [peopleResults, setPeopleResults] = useState<VoterSelection[]>([]);
   const [resultsLoading, setResultsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [clientId, setClientId] = useState<string>("");
@@ -29,6 +30,7 @@ export default function ResultsPage() {
   const [modalVoters, setModalVoters] = useState<string[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"day" | "person">("day");
 
   const refreshResults = useCallback(async (eventId: string) => {
     const res = await fetch(
@@ -40,6 +42,19 @@ export default function ResultsPage() {
     if (!res.ok) throw new Error("No se pudieron cargar los resultados");
     const data: VoteResult[] = await res.json();
     setResults(data);
+  }, []);
+
+  const refreshPeople = useCallback(async (eventId: string) => {
+    const res = await fetch(
+      `/api/voters/people?eventId=${encodeURIComponent(eventId)}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) throw new Error("No se pudieron cargar los votos por persona");
+    const data: { voters: VoterSelection[] } = await res.json();
+    const sorted = [...data.voters].sort((a, b) =>
+      a.name.localeCompare(b.name, "es", { sensitivity: "base" })
+    );
+    setPeopleResults(sorted);
   }, []);
 
   useEffect(() => {
@@ -83,7 +98,11 @@ export default function ResultsPage() {
     const fetchResults = async () => {
       setResultsLoading(true);
       try {
-        await refreshResults(selectedEvent);
+        if (viewMode === "day") {
+          await refreshResults(selectedEvent);
+        } else {
+          await refreshPeople(selectedEvent);
+        }
       } catch (error) {
         setErrorMessage(
           error instanceof Error ? error.message : "Error al cargar resultados"
@@ -93,7 +112,7 @@ export default function ResultsPage() {
       }
     };
     fetchResults();
-  }, [refreshResults, selectedEvent]);
+  }, [refreshPeople, refreshResults, selectedEvent, viewMode]);
 
   const openModal = async (day: string) => {
     if (!selectedEvent) return;
@@ -183,19 +202,33 @@ export default function ResultsPage() {
               Resultados
             </p>
             <p className="text-lg font-semibold text-slate-100">
-              Votos por día
+              {viewMode === "day" ? "Votos por día" : "Votos por persona"}
             </p>
           </div>
-          {resultsLoading && <span className="tag">Cargando...</span>}
+          <div className="flex items-center gap-2">
+            <button
+              className={`tag ${viewMode === "day" ? "bg-emerald-500/20 border-emerald-400 text-emerald-100" : ""}`}
+              onClick={() => setViewMode("day")}
+            >
+              Por día
+            </button>
+            <button
+              className={`tag ${viewMode === "person" ? "bg-emerald-500/20 border-emerald-400 text-emerald-100" : ""}`}
+              onClick={() => setViewMode("person")}
+            >
+              Por persona
+            </button>
+            {resultsLoading && <span className="tag">Cargando...</span>}
+          </div>
         </div>
 
-        {results.length === 0 && !resultsLoading && (
+        {viewMode === "day" && results.length === 0 && !resultsLoading && (
           <p className="text-slate-400 text-sm">
             Aún no hay votos para este evento.
           </p>
         )}
 
-        {results.length > 0 && (
+        {viewMode === "day" && results.length > 0 && (
           <div className="list">
             {results.map((result) => (
               <button
@@ -213,6 +246,36 @@ export default function ResultsPage() {
                   {result.votes}
                 </span>
               </button>
+            ))}
+          </div>
+        )}
+
+        {viewMode === "person" && peopleResults.length === 0 && !resultsLoading && (
+          <p className="text-slate-400 text-sm">
+            Aún no hay votos registrados por persona en este evento.
+          </p>
+        )}
+
+        {viewMode === "person" && peopleResults.length > 0 && (
+          <div className="list">
+            {peopleResults.map((person) => (
+              <div key={person.name} className="list-item flex-col items-start gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                  <span className="text-slate-100 font-semibold">{person.name}</span>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs text-slate-300">
+                  {person.days.length === 0 ? (
+                    <span className="tag">Sin días seleccionados</span>
+                  ) : (
+                    person.days.map((day) => (
+                      <span key={`${person.name}-${day}`} className="tag">
+                        {formatDisplay(day)}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         )}
