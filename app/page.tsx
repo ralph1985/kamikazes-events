@@ -82,6 +82,7 @@ export default function Page() {
     const cached = getCachedJson<VoteResult[]>(cacheKey);
     if (cached) {
       setResults(cached);
+      return;
     }
 
     const res = await fetch(cacheKey, { cache: "no-store" });
