@@ -23,6 +23,7 @@ import { DescriptionCard } from "./components/DescriptionCard";
 import { HeaderBar } from "./components/HeaderBar";
 import Link from "next/link";
 import { clearCacheByPrefix, getCachedJson, setCachedJson } from "./lib/cache";
+import { EVENTS_CACHE_TTL_MS } from "./lib/constants";
 
 type VoteState = "idle" | "loading" | "success" | "error";
 
@@ -103,7 +104,7 @@ export default function Page() {
       setEventsLoading(true);
       try {
         const cacheKey = "/api/events";
-        const cached = getCachedJson<EventItem[]>(cacheKey, 20 * 60 * 1000);
+        const cached = getCachedJson<EventItem[]>(cacheKey, EVENTS_CACHE_TTL_MS);
         let eventsData: EventItem[];
         if (cached) {
           eventsData = cached;
@@ -111,7 +112,7 @@ export default function Page() {
           const res = await fetch(cacheKey, { cache: "no-store" });
           if (!res.ok) throw new Error("No se pudieron cargar los eventos");
           eventsData = await res.json();
-          setCachedJson(cacheKey, eventsData, 20 * 60 * 1000);
+          setCachedJson(cacheKey, eventsData, EVENTS_CACHE_TTL_MS);
         }
         setEvents(eventsData);
 

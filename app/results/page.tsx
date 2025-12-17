@@ -15,6 +15,7 @@ import type { EventItem, VoteResult, VoterSelection } from "../lib/storage/Stora
 import { DescriptionCard } from "../components/DescriptionCard";
 import { HeaderBar } from "../components/HeaderBar";
 import { clearCacheByPrefix, getCachedJson, setCachedJson } from "../lib/cache";
+import { EVENTS_CACHE_TTL_MS } from "../lib/constants";
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -105,7 +106,7 @@ export default function ResultsPage() {
       setEventsLoading(true);
       try {
         const cacheKey = "/api/events";
-        const cached = getCachedJson<EventItem[]>(cacheKey, 20 * 60 * 1000);
+        const cached = getCachedJson<EventItem[]>(cacheKey, EVENTS_CACHE_TTL_MS);
         let eventsData: EventItem[];
         if (cached) {
           eventsData = cached;
@@ -113,7 +114,7 @@ export default function ResultsPage() {
           const res = await fetch(cacheKey, { cache: "no-store" });
           if (!res.ok) throw new Error("No se pudieron cargar los eventos");
           eventsData = await res.json();
-          setCachedJson(cacheKey, eventsData, 20 * 60 * 1000);
+          setCachedJson(cacheKey, eventsData, EVENTS_CACHE_TTL_MS);
         }
         setEvents(eventsData);
         const storedEventId =

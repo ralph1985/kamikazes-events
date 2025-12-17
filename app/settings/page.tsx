@@ -14,6 +14,7 @@ import {
   saveName
 } from '../lib/client';
 import { getCachedJson, setCachedJson, clearCacheByPrefix } from '../lib/cache';
+import { EVENTS_CACHE_TTL_MS } from '../lib/constants';
 import type { EventItem } from '../lib/storage/StorageDriver';
 
 export default function SettingsPage() {
@@ -37,14 +38,14 @@ export default function SettingsPage() {
       setEventsLoading(true);
       try {
         const cacheKey = '/api/events';
-        const cached = getCachedJson<EventItem[]>(cacheKey, 20 * 60 * 1000);
+        const cached = getCachedJson<EventItem[]>(cacheKey, EVENTS_CACHE_TTL_MS);
         if (cached) {
           setEvents(cached);
         }
         const res = await fetch(cacheKey, { cache: 'no-store' });
         if (!res.ok) throw new Error('No se pudieron cargar los eventos');
         const data: EventItem[] = await res.json();
-        setCachedJson(cacheKey, data, 20 * 60 * 1000);
+        setCachedJson(cacheKey, data, EVENTS_CACHE_TTL_MS);
         setEvents(data);
         const stored = typeof window !== 'undefined' ? getStoredEvent() : null;
         const defaultEvent = stored && data.some((e) => e.id === stored) ? stored : data[0]?.id ?? '';
