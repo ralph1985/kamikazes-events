@@ -51,7 +51,8 @@ export default function ResultsPage() {
     );
     if (!res.ok) throw new Error("No se pudieron cargar los votos por persona");
     const data: { voters: VoterSelection[] } = await res.json();
-    const sorted = [...data.voters].sort((a, b) =>
+    const filtered = data.voters.filter((voter) => voter.days.length > 0);
+    const sorted = [...filtered].sort((a, b) =>
       a.name.localeCompare(b.name, "es", { sensitivity: "base" })
     );
     setPeopleResults(sorted);
