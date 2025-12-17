@@ -121,6 +121,7 @@ export class KvDriver implements StorageDriver {
   private async getVoterKeys(eventId: string): Promise<string[]> {
     const fromSet = (await kv.smembers(this.votersSetKey(eventId))) || [];
     // Fallback: buscar claves directas por si el set no está completo (datos antiguos).
+    // TODO: migrar las claves legacy al set de votantes y eliminar este fallback cuando los datos estén saneados.
     let fromKeys: string[] = [];
     try {
       const keys = await kv.keys(`event:${eventId}:voter:*`);
