@@ -106,20 +106,22 @@ export default function ResultsPage() {
       try {
         const cacheKey = "/api/events";
         const cached = getCachedJson<EventItem[]>(cacheKey, 20 * 60 * 1000);
+        let eventsData: EventItem[];
         if (cached) {
-          setEvents(cached);
+          eventsData = cached;
+        } else {
+          const res = await fetch(cacheKey, { cache: "no-store" });
+          if (!res.ok) throw new Error("No se pudieron cargar los eventos");
+          eventsData = await res.json();
+          setCachedJson(cacheKey, eventsData, 20 * 60 * 1000);
         }
-        const res = await fetch(cacheKey, { cache: "no-store" });
-        if (!res.ok) throw new Error("No se pudieron cargar los eventos");
-        const data: EventItem[] = await res.json();
-        setCachedJson(cacheKey, data, 20 * 60 * 1000);
-        setEvents(data);
+        setEvents(eventsData);
         const storedEventId =
           typeof window !== "undefined" ? getStoredEvent() : null;
         const defaultEventId =
-          storedEventId && data.some((event) => event.id === storedEventId)
+          storedEventId && eventsData.some((event) => event.id === storedEventId)
             ? storedEventId
-            : data[0]?.id ?? "";
+            : eventsData[0]?.id ?? "";
         setSelectedEvent(defaultEventId);
       } catch (error) {
         setErrorMessage(
