@@ -1,5 +1,6 @@
 import { addDays, format, isAfter, isBefore, isValid, parseISO, startOfDay, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { VOTING } from './constants';
 
 export function formatDayKey(date: Date): string {
   return format(date, 'yyyy-MM-dd');
@@ -17,7 +18,7 @@ export function isValidDayKey(value: string): boolean {
   return isValid(parsed);
 }
 
-export const allowedDayKeys = ['2026-01-17', '2026-02-07', '2026-02-08', '2026-02-21', '2026-02-22', '2026-02-28'];
+export const allowedDayKeys = VOTING.allowedDayKeys as readonly string[];
 
 export function formatDisplay(dayKey: string): string {
   return format(parseDayKey(dayKey), 'EEE dd/MM/yyyy', { locale: es });

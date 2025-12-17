@@ -1,6 +1,8 @@
-const CLIENT_ID_KEY = 'kamikazes:clientId';
-const VOTER_NAME_KEY = 'voterName';
-const SELECTED_EVENT_KEY = 'selectedEventId';
+import { STORAGE_KEYS } from './constants';
+
+const CLIENT_ID_KEY = STORAGE_KEYS.clientId;
+const VOTER_NAME_KEY = STORAGE_KEYS.voterName;
+const SELECTED_EVENT_KEY = STORAGE_KEYS.selectedEventId;
 
 function randomId(): string {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 10);
