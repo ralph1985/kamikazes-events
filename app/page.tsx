@@ -3,7 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar } from "./components/Calendar";
-import { allowedDaysWithinWindow, formatDayKey, isWithinVoteWindow, parseDayKey } from "./lib/dates";
+import {
+  allowedDaysWithinWindow,
+  formatDayKey,
+  isWithinVoteWindow,
+  parseDayKey,
+} from "./lib/dates";
 import { isSameDay } from "date-fns";
 import type { EventItem, VoteResult } from "./lib/storage/StorageDriver";
 import {
@@ -56,11 +61,15 @@ export default function Page() {
   );
   const windowStartDate = useMemo(() => {
     const first = allowedDayKeysForEvent[0];
-    return first ? parseDayKey(first) : parseDayKey(selectedEventData?.window.start ?? "2026-01-07");
+    return first
+      ? parseDayKey(first)
+      : parseDayKey(selectedEventData?.window.start ?? "2026-01-07");
   }, [allowedDayKeysForEvent, selectedEventData?.window.start]);
   const windowEndDate = useMemo(() => {
     const last = allowedDayKeysForEvent[allowedDayKeysForEvent.length - 1];
-    return last ? parseDayKey(last) : parseDayKey(selectedEventData?.window.end ?? "2026-03-01");
+    return last
+      ? parseDayKey(last)
+      : parseDayKey(selectedEventData?.window.end ?? "2026-03-01");
   }, [allowedDayKeysForEvent, selectedEventData?.window.end]);
 
   const refreshResults = useCallback(async (eventId: string) => {
@@ -161,12 +170,7 @@ export default function Page() {
     };
 
     fetchData();
-  }, [
-    clientId,
-    refreshResults,
-    selectedEvent,
-    selectedEventData,
-  ]);
+  }, [clientId, refreshResults, selectedEvent, selectedEventData]);
 
   const handleVote = async (day: Date) => {
     if (!selectedEvent || !voterName.trim() || !clientId || !selectedEventData)
@@ -234,7 +238,11 @@ export default function Page() {
           {
             href: "/settings",
             label: "Preferencias",
-            icon: <span className="inline-flex h-4 w-4 items-center justify-center">⚙️</span>,
+            icon: (
+              <span className="inline-flex h-4 w-4 items-center justify-center">
+                ⚙️
+              </span>
+            ),
             ariaLabel: "Preferencias",
           },
         ]}
@@ -265,7 +273,7 @@ export default function Page() {
         loadingDayKey={votingDayKey}
         windowLabel={
           selectedEventData
-            ? `Días habilitados: ${allowedDayKeysForEvent.join(", ")}`
+            ? `Días habilitados: ${allowedDayKeysForEvent.length}`
             : "Rango activo"
         }
       />
@@ -273,7 +281,8 @@ export default function Page() {
       <section className="space-y-3">
         {voteState === "success" && (
           <p className="text-emerald-300 text-sm">
-            ¡Voto registrado! Añade o quita días tocando en el calendario; la selección se actualiza al momento.
+            ¡Voto registrado! Añade o quita días tocando en el calendario; la
+            selección se actualiza al momento.
           </p>
         )}
         {voteState === "error" && (
