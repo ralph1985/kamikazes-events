@@ -46,12 +46,11 @@ export class KvDriver implements StorageDriver {
   }
 
   async getResults(eventId: string): Promise<VoteResult[]> {
-    await this.recomputeCounts(eventId);
-    const counts = (await kv.hgetall<Record<string, number>>(this.countsKey(eventId))) || {};
-    return Object.entries(counts)
+    const aggregate = await this.aggregateCounts(eventId);
+    return Object.entries(aggregate)
       .map(([day, votes]) => ({
         day: formatDayKey(parseDayKey(day)),
-        votes: Number(votes)
+        votes
       }))
       .sort((a, b) => {
         if (b.votes !== a.votes) return b.votes - a.votes;
@@ -62,21 +61,9 @@ export class KvDriver implements StorageDriver {
   async vote(eventId: string, voterId: string, _name: string, days: string[]): Promise<void> {
     const voterKey = this.buildVoterKey(voterId);
     const voterStoreKey = this.voterStoreKey(eventId, voterKey);
-    const previous: string[] = (await kv.get<string[]>(voterStoreKey)) || [];
-    const countsKey = `event:${eventId}:counts`;
-
-    for (const day of previous) {
-      await kv.hincrby(countsKey, day, -1);
-    }
-
-    for (const day of days) {
-      await kv.hincrby(countsKey, day, 1);
-    }
-
     await kv.set(voterStoreKey, days);
     await kv.sadd(this.votersSetKey(eventId), voterKey);
     await kv.set(this.voterNameKey(eventId, voterKey), _name);
-    await this.recomputeCounts(eventId);
   }
 
   async getSelection(eventId: string, voterId: string): Promise<string[]> {
@@ -86,7 +73,6 @@ export class KvDriver implements StorageDriver {
   }
 
   async getVotersByDay(eventId: string, day: string): Promise<string[]> {
-    await this.recomputeCounts(eventId);
     const voterKeys = (await kv.smembers(this.votersSetKey(eventId))) || [];
     const matches: string[] = [];
     for (const voterKey of voterKeys) {
@@ -119,7 +105,7 @@ export class KvDriver implements StorageDriver {
     return slugify(raw.trim().toLowerCase()) || 'anon';
   }
 
-  private async recomputeCounts(eventId: string) {
+  private async aggregateCounts(eventId: string) {
     const voterKeys = (await kv.smembers(this.votersSetKey(eventId))) || [];
     const aggregate: Record<string, number> = {};
 
@@ -129,15 +115,7 @@ export class KvDriver implements StorageDriver {
         aggregate[day] = (aggregate[day] ?? 0) + 1;
       });
     }
-
-    await kv.del(this.countsKey(eventId));
-    if (Object.keys(aggregate).length > 0) {
-      await kv.hset(this.countsKey(eventId), aggregate);
-    }
-  }
-
-  private countsKey(eventId: string) {
-    return `event:${eventId}:counts`;
+    return aggregate;
   }
 
   private voterStoreKey(eventId: string, voterKey: string) {
