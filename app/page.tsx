@@ -1,16 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar } from "./components/Calendar";
-import {
-  formatDayKey,
-  isWeekendDate,
-  isWithinVoteWindow,
-  nextWeekend,
-  parseDayKey,
-} from "./lib/dates";
+import { allowedDaysWithinWindow, formatDayKey, isWithinVoteWindow, parseDayKey } from "./lib/dates";
 import { isSameDay } from "date-fns";
 import type { EventItem, VoteResult } from "./lib/storage/StorageDriver";
 import {
@@ -23,6 +16,7 @@ import {
 import { LoadingOverlay } from "./components/LoadingOverlay";
 import { DescriptionCard } from "./components/DescriptionCard";
 import { HeaderBar } from "./components/HeaderBar";
+import Link from "next/link";
 
 type VoteState = "idle" | "loading" | "success" | "error";
 
@@ -52,22 +46,22 @@ export default function Page() {
     });
     return map;
   }, [results]);
-  const windowStartDate = useMemo(
-    () => parseDayKey(selectedEventData?.window.start ?? "2026-01-07"),
-    [selectedEventData?.window.start]
-  );
-  const windowEndDate = useMemo(
-    () => parseDayKey(selectedEventData?.window.end ?? "2026-03-01"),
-    [selectedEventData?.window.end]
-  );
-  const defaultSelection = useMemo(
+  const allowedDayKeysForEvent = useMemo(
     () =>
-      nextWeekend(
+      allowedDaysWithinWindow(
         selectedEventData?.window.start ?? "2026-01-07",
         selectedEventData?.window.end ?? "2026-03-01"
       ),
     [selectedEventData?.window.end, selectedEventData?.window.start]
   );
+  const windowStartDate = useMemo(() => {
+    const first = allowedDayKeysForEvent[0];
+    return first ? parseDayKey(first) : parseDayKey(selectedEventData?.window.start ?? "2026-01-07");
+  }, [allowedDayKeysForEvent, selectedEventData?.window.start]);
+  const windowEndDate = useMemo(() => {
+    const last = allowedDayKeysForEvent[allowedDayKeysForEvent.length - 1];
+    return last ? parseDayKey(last) : parseDayKey(selectedEventData?.window.end ?? "2026-03-01");
+  }, [allowedDayKeysForEvent, selectedEventData?.window.end]);
 
   const refreshResults = useCallback(async (eventId: string) => {
     const res = await fetch(
@@ -169,7 +163,6 @@ export default function Page() {
     fetchData();
   }, [
     clientId,
-    defaultSelection,
     refreshResults,
     selectedEvent,
     selectedEventData,
@@ -267,11 +260,12 @@ export default function Page() {
         onSelect={(date) => handleVote(date)}
         fromDate={windowStartDate}
         toDate={windowEndDate}
+        allowedDayKeys={allowedDayKeysForEvent}
         dayVotes={votesByDay}
         loadingDayKey={votingDayKey}
         windowLabel={
           selectedEventData
-            ? `${selectedEventData.window.start} - ${selectedEventData.window.end}`
+            ? `Días habilitados: ${allowedDayKeysForEvent.join(", ")}`
             : "Rango activo"
         }
       />

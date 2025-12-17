@@ -1,6 +1,6 @@
 "use client";
 
-import { addDays, eachDayOfInterval, endOfWeek, format, isAfter, isBefore, isSameDay, isWeekend, startOfWeek } from 'date-fns';
+import { addDays, eachDayOfInterval, endOfWeek, format, isAfter, isBefore, isSameDay, startOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { clsx } from 'clsx';
 import { useMemo } from 'react';
@@ -14,6 +14,7 @@ type Props = {
   windowLabel?: string;
   dayVotes?: Record<string, number>;
   loadingDayKey?: string | null;
+  allowedDayKeys?: string[];
 };
 
 export function Calendar({
@@ -23,8 +24,11 @@ export function Calendar({
   toDate,
   windowLabel,
   dayVotes,
-  loadingDayKey
+  loadingDayKey,
+  allowedDayKeys = []
 }: Props) {
+  const allowedSet = useMemo(() => new Set(allowedDayKeys), [allowedDayKeys]);
+
   const weeks = useMemo(() => {
     const start = startOfWeek(fromDate, { weekStartsOn: 1 });
     const end = endOfWeek(toDate, { weekStartsOn: 1 });
@@ -59,8 +63,15 @@ export function Calendar({
     onSelect(day);
   };
 
-  const isDisabled = (day: Date) =>
-    isBefore(day, fromDate) || isAfter(day, toDate) || !isWeekend(day);
+  const isDisabled = (day: Date) => {
+    const key = formatDayKey(day);
+    const outOfRange = isBefore(day, fromDate) || isAfter(day, toDate);
+    if (outOfRange) return true;
+    if (allowedSet.size > 0) {
+      return !allowedSet.has(key);
+    }
+    return false;
+  };
 
   return (
     <div className="card">

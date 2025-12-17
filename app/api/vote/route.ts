@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { formatDayKey, isWithinVoteWindow, parseDayKey } from '../../lib/dates';
+import { allowedDayKeys, formatDayKey, isWithinVoteWindow, parseDayKey } from '../../lib/dates';
 import { ensureDefaultEvent } from '../../lib/storage';
 
 export const dynamic = 'force-dynamic';
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     } catch {
       return NextResponse.json(
         {
-          message: `El día no es válido o está fuera de rango (${event.window.start} a ${event.window.end}, solo fines de semana)`
+          message: `El día no es válido o está fuera de rango (${allowedDayKeys.join(', ')})`
         },
         { status: 400 }
       );
