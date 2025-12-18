@@ -19,7 +19,8 @@ function hasKvEnv(): boolean {
 
 export function getDriver(): Promise<StorageDriver> {
   if (!driverPromise) {
-    driverPromise = Promise.resolve(hasKvEnv() ? new KvDriver() : new MockDriver());
+    const instance: StorageDriver = hasKvEnv() ? new KvDriver() : new MockDriver();
+    driverPromise = Promise.resolve(instance);
   }
   return driverPromise;
 }

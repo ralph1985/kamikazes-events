@@ -16,7 +16,8 @@ export const EVENTS_CACHE_TTL_MS = 20 * 60 * 1000;
 export const STORAGE_KEYS = {
   selectedEventId: 'selectedEventId',
   voterName: 'voterName',
-  clientId: 'clientId'
+  clientId: 'clientId',
+  voterWeight: 'voterWeight'
 } as const;
 
 /**

@@ -30,6 +30,8 @@ export interface StorageDriver {
   getSelection(eventId: string, voterId: string): Promise<string[]>;
   getVotersByDay(eventId: string, day: string): Promise<string[]>;
   setVoterName(eventId: string, voterId: string, name: string): Promise<void>;
+   setVoterWeight(eventId: string, voterId: string, weight: number): Promise<void>;
+   getVoterWeight(eventId: string, voterId: string): Promise<number>;
   getVotersSelections(eventId: string): Promise<VoterSelection[]>;
   listVoters(): Promise<VoterInfo[]>;
 }

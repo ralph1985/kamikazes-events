@@ -90,6 +90,17 @@ export class KvDriver implements StorageDriver {
     await kv.set(this.voterNameKey(eventId, voterKey), name);
   }
 
+  async setVoterWeight(eventId: string, voterId: string, weight: number): Promise<void> {
+    const voterKey = this.buildVoterKey(voterId);
+    await kv.set(this.voterWeightKey(eventId, voterKey), weight);
+  }
+
+  async getVoterWeight(eventId: string, voterId: string): Promise<number> {
+    const voterKey = this.buildVoterKey(voterId);
+    const value = await kv.get<number>(this.voterWeightKey(eventId, voterKey));
+    return typeof value === 'number' && value > 0 ? value : 1;
+  }
+
   async getVotersSelections(eventId: string) {
     const voterKeys = await this.getVoterKeys(eventId);
     const voters: { name: string; days: string[] }[] = [];
@@ -131,8 +142,9 @@ export class KvDriver implements StorageDriver {
 
     for (const voterKey of voterKeys) {
       const selection = (await kv.get<string[]>(this.voterStoreKey(eventId, voterKey))) || [];
+      const weight = await this.getVoterWeight(eventId, voterKey);
       selection.forEach((day) => {
-        aggregate[day] = (aggregate[day] ?? 0) + 1;
+        aggregate[day] = (aggregate[day] ?? 0) + weight;
       });
     }
     return aggregate;
@@ -160,6 +172,10 @@ export class KvDriver implements StorageDriver {
 
   private voterNameKey(eventId: string, voterKey: string) {
     return `event:${eventId}:voter:${voterKey}:name`;
+  }
+
+  private voterWeightKey(eventId: string, voterKey: string) {
+    return `event:${eventId}:voter:${voterKey}:weight`;
   }
 
   private votersSetKey(eventId: string) {

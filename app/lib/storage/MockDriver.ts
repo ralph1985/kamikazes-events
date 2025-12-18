@@ -19,6 +19,7 @@ export class MockDriver implements StorageDriver {
   private votes: Map<string, Counts>;
   private voterSelections: Map<string, Map<string, string[]>>;
   private voterNames: Map<string, string>;
+  private voterWeights: Map<string, number>;
   private windows: Map<string, { start: string; end: string }>;
 
   constructor() {
@@ -39,6 +40,7 @@ export class MockDriver implements StorageDriver {
     this.votes = new Map();
     this.voterSelections = new Map();
     this.voterNames = new Map();
+    this.voterWeights = new Map();
     this.windows = new Map(initialEvents.map((event) => [event.id, event.window]));
     this.seedVotes();
   }
@@ -106,6 +108,16 @@ export class MockDriver implements StorageDriver {
     this.voterNames.set(voterKey, name);
   }
 
+  async setVoterWeight(eventId: string, voterId: string, weight: number): Promise<void> {
+    const voterKey = this.normalizeId(voterId);
+    this.voterWeights.set(voterKey, weight);
+  }
+
+  async getVoterWeight(eventId: string, voterId: string): Promise<number> {
+    const voterKey = this.normalizeId(voterId);
+    return this.voterWeights.get(voterKey) ?? 1;
+  }
+
   async getVotersSelections(eventId: string) {
     const voterMap = this.voterSelections.get(eventId) ?? new Map();
     const voters: { name: string; days: string[] }[] = [];
@@ -118,8 +130,7 @@ export class MockDriver implements StorageDriver {
   async listVoters() {
     return Array.from(this.voterNames.entries())
       .filter(([id]) => {
-        const selection = this.voterSelections.get('')?.get(id) ?? [];
-        return selection.length > 0;
+        return Array.from(this.voterSelections.values()).some((map) => map.get(id)?.length);
       })
       .map(([id, name]) => ({ id, name }));
   }
@@ -131,8 +142,9 @@ export class MockDriver implements StorageDriver {
   private recomputeCounts(eventId: string) {
     const voterMap = this.voterSelections.get(eventId) ?? new Map();
     const counts: Counts = new Map();
-    voterMap.forEach((days) => {
-      days.forEach((day: string) => counts.set(day, (counts.get(day) ?? 0) + 1));
+    voterMap.forEach((days, voterKey) => {
+      const weight = this.voterWeights.get(voterKey) ?? 1;
+      days.forEach((day: string) => counts.set(day, (counts.get(day) ?? 0) + weight));
     });
     this.votes.set(eventId, counts);
   }

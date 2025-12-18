@@ -10,8 +10,10 @@ import {
   getClientId,
   getStoredEvent,
   getStoredName,
+  getStoredWeight,
   saveEvent,
   saveName,
+  saveWeight,
   setClientId as persistClientId
 } from '../lib/client';
 import { getCachedJson, setCachedJson, clearCacheByPrefix } from '../lib/cache';
@@ -23,6 +25,7 @@ export default function SettingsPage() {
   const [eventsLoading, setEventsLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<string>('');
   const [voterName, setVoterName] = useState<string>('');
+  const [voterWeight, setVoterWeight] = useState<number>(1);
   const [clientId, setClientId] = useState<string>('');
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [resetStatus, setResetStatus] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
@@ -37,6 +40,7 @@ export default function SettingsPage() {
     if (typeof window === 'undefined') return;
     setClientId(getClientId());
     setVoterName(getStoredName());
+    setVoterWeight(getStoredWeight());
   }, []);
 
   useEffect(() => {
@@ -56,6 +60,23 @@ export default function SettingsPage() {
         const stored = typeof window !== 'undefined' ? getStoredEvent() : null;
         const defaultEvent = stored && data.some((e) => e.id === stored) ? stored : data[0]?.id ?? '';
         setSelectedEvent(defaultEvent);
+        if (defaultEvent && clientId) {
+          try {
+            const resWeight = await fetch(
+              `/api/voter-weight?eventId=${encodeURIComponent(defaultEvent)}&voterId=${encodeURIComponent(clientId)}`,
+              { cache: 'no-store' }
+            );
+            if (resWeight.ok) {
+              const payload: { weight?: number } = await resWeight.json();
+              if (typeof payload.weight === 'number' && payload.weight > 0) {
+                setVoterWeight(payload.weight);
+                saveWeight(payload.weight);
+              }
+            }
+          } catch {
+            // ignore load errors, keep local weight
+          }
+        }
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : 'Error al cargar eventos');
       } finally {
@@ -78,11 +99,16 @@ export default function SettingsPage() {
       setErrorMessage('Selecciona un evento');
       return;
     }
+    if (!Number.isFinite(voterWeight) || voterWeight <= 0) {
+      setErrorMessage('El peso debe ser mayor que 0');
+      return;
+    }
     setStatus('saving');
     const nameToSave = voterName.trim();
     try {
       saveName(nameToSave);
       saveEvent(selectedEvent);
+      saveWeight(voterWeight);
 
       // sincronizar nombre en votos existentes
       if (events.length > 0 && clientId) {
@@ -97,10 +123,25 @@ export default function SettingsPage() {
         }).catch((error) => {
           console.error('sync voter name failed', error);
         });
+
+        await fetch('/api/voter-weight', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            voterId: clientId,
+            weight: voterWeight,
+            eventIds: events.map((event) => event.id)
+          })
+        }).catch((error) => {
+          console.error('sync voter weight failed', error);
+        });
       }
 
       setStatus('saved');
       setTimeout(() => setStatus('idle'), 2000);
+      clearCacheByPrefix('/api/results');
+      clearCacheByPrefix('/api/voters');
+      clearCacheByPrefix('/api/vote');
       router.push('/');
     } catch (error) {
       setStatus('error');
@@ -130,6 +171,19 @@ export default function SettingsPage() {
               onChange={(e) => setVoterName(e.target.value)}
               aria-label="Introduce tu nombre"
               required
+            />
+          </div>
+
+          <div className="field">
+            <label className="text-sm text-slate-300">Peso del voto (ej. 1 = un voto)</label>
+            <input
+              type="number"
+              min={0.1}
+              step={0.1}
+              className="input"
+              value={voterWeight}
+              onChange={(e) => setVoterWeight(Number(e.target.value))}
+              aria-label="Configura el peso de tu voto"
             />
           </div>
 
