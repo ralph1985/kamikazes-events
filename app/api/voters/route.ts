@@ -24,10 +24,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'El evento no existe' }, { status: 400 });
     }
 
-    const voters = await driver.getVotersByDay(eventId, day);
-    return NextResponse.json({ voters });
+    const selections = await driver.getVotersSelections(eventId);
+    const voters = selections
+      .filter((voter) => voter.days.includes(day))
+      .map((voter) => ({
+        name: voter.name,
+        weight: typeof voter.weight === 'number' && voter.weight > 0 ? voter.weight : 1
+      }));
+    return NextResponse.json(
+      { voters },
+      { headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' } }
+    );
   } catch (error) {
     console.error('GET /api/voters', error);
-    return NextResponse.json({ message: 'No se pudo obtener la lista de votos' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'No se pudo obtener la lista de votos' },
+      { status: 500, headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' } }
+    );
   }
 }

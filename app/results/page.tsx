@@ -38,7 +38,7 @@ export default function ResultsPage() {
     [selectedEventData?.window.end, selectedEventData?.window.start]
   );
   const [modalDay, setModalDay] = useState<string | null>(null);
-  const [modalVoters, setModalVoters] = useState<string[]>([]);
+  const [modalVoters, setModalVoters] = useState<{ name: string; weight?: number }[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState<string>("");
   const [viewMode, setViewMode] = useState<"day" | "person">("day");
@@ -176,7 +176,7 @@ export default function ResultsPage() {
           payload.message || "No se pudo cargar el detalle de votos"
         );
       }
-      const payload: { voters: string[] } = await res.json();
+      const payload: { voters: { name: string; weight?: number }[] } = await res.json();
       setModalVoters(payload.voters);
     } catch (error) {
       setModalError(
@@ -363,9 +363,10 @@ export default function ResultsPage() {
           {!modalLoading && !modalError && modalVoters.length > 0 && (
             <ul className="text-slate-100 text-sm space-y-2">
               {modalVoters.map((voter, idx) => (
-                <li key={`${voter}-${idx}`} className="flex items-center gap-2">
+                <li key={`${voter.name}-${idx}`} className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-                  <span>{voter}</span>
+                  <span>{voter.name}</span>
+                  <span className="text-xs text-slate-400">(peso: {voter.weight ?? 1})</span>
                 </li>
               ))}
             </ul>
