@@ -15,6 +15,7 @@ export type VoteResult = {
 export type VoterSelection = {
   name: string;
   days: string[];
+  weight?: number;
 };
 
 export type VoterInfo = {

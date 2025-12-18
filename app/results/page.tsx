@@ -314,6 +314,9 @@ export default function ResultsPage() {
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
                   <span className="text-slate-100 font-semibold">{person.name}</span>
+                  <span className="text-xs text-slate-400">
+                    Peso: {person.weight ?? 1}
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-2 justify-center text-xs text-slate-300">
                   {person.days.length === 0 ? (

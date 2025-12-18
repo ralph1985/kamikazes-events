@@ -120,9 +120,13 @@ export class MockDriver implements StorageDriver {
 
   async getVotersSelections(eventId: string) {
     const voterMap = this.voterSelections.get(eventId) ?? new Map();
-    const voters: { name: string; days: string[] }[] = [];
+    const voters: { name: string; days: string[]; weight?: number }[] = [];
     voterMap.forEach((days, voterKey) => {
-      voters.push({ name: this.voterNames.get(voterKey) ?? 'Anónimo', days });
+      voters.push({
+        name: this.voterNames.get(voterKey) ?? 'Anónimo',
+        days,
+        weight: this.voterWeights.get(voterKey) ?? 1
+      });
     });
     return voters;
   }
