@@ -85,7 +85,7 @@ export default function SettingsPage() {
     };
 
     fetchEvents();
-  }, []);
+  }, [clientId]);
 
   const router = useRouter();
 
