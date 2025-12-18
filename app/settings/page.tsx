@@ -12,7 +12,7 @@ import {
   getStoredName,
   saveEvent,
   saveName,
-  setClientId
+  setClientId as persistClientId
 } from '../lib/client';
 import { getCachedJson, setCachedJson, clearCacheByPrefix } from '../lib/cache';
 import { EVENTS_CACHE_TTL_MS } from '../lib/constants';
@@ -266,6 +266,7 @@ export default function SettingsPage() {
                   onClick={() => {
                     const target = recoveryList.find((user) => user.id === selectedRecovery);
                     if (!target) return;
+                    persistClientId(target.id);
                     setClientId(target.id);
                     setVoterName(target.name);
                     saveName(target.name);
