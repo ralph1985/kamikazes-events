@@ -27,6 +27,11 @@ export function saveName(name: string) {
   localStorage.setItem(VOTER_NAME_KEY, name);
 }
 
+export function setClientId(id: string) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(CLIENT_ID_KEY, id);
+}
+
 export function getStoredEvent(): string {
   if (typeof window === 'undefined') return '';
   return localStorage.getItem(SELECTED_EVENT_KEY) ?? '';

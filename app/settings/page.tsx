@@ -11,7 +11,8 @@ import {
   getStoredEvent,
   getStoredName,
   saveEvent,
-  saveName
+  saveName,
+  setClientId
 } from '../lib/client';
 import { getCachedJson, setCachedJson, clearCacheByPrefix } from '../lib/cache';
 import { EVENTS_CACHE_TTL_MS } from '../lib/constants';
@@ -26,6 +27,11 @@ export default function SettingsPage() {
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [resetStatus, setResetStatus] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string>('');
+  const [recoveryList, setRecoveryList] = useState<{ id: string; name: string }[]>([]);
+  const [selectedRecovery, setSelectedRecovery] = useState<string>('');
+  const [recoverySuccess, setRecoverySuccess] = useState<string>('');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -205,6 +211,76 @@ export default function SettingsPage() {
           {resetStatus === 'done' && (
             <p className="text-emerald-300 text-xs">Datos borrados correctamente.</p>
           )}
+
+          <div className="pt-4 space-y-2">
+            <p className="text-slate-200 font-semibold text-sm">Recuperar usuario</p>
+            <p className="text-slate-400 text-xs">
+              Si borraste tus datos o cambiaste de dispositivo, puedes seleccionar un usuario ya registrado
+              para recuperar tu ID y votos. Se sobrescribirá tu identificador local.
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="btn bg-sky-500 hover:bg-sky-400 text-slate-900"
+                disabled={recoveryLoading}
+                onClick={async () => {
+                  setRecoveryLoading(true);
+                  setRecoveryError('');
+                  setRecoverySuccess('');
+                  try {
+                    const res = await fetch('/api/voters/recovery', { cache: 'no-store' });
+                    if (!res.ok) throw new Error('No se pudo cargar la lista de usuarios');
+                    const payload: { voters: { id: string; name: string }[] } = await res.json();
+                    setRecoveryList(payload.voters);
+                    setSelectedRecovery(payload.voters[0]?.id ?? '');
+                  } catch (error) {
+                    setRecoveryError(error instanceof Error ? error.message : 'Error al recuperar usuarios');
+                  } finally {
+                    setRecoveryLoading(false);
+                  }
+                }}
+              >
+                {recoveryLoading ? 'Cargando...' : 'Mostrar usuarios'}
+              </button>
+              {recoveryError && <span className="text-red-300 text-xs">{recoveryError}</span>}
+            </div>
+
+            {recoveryList.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm text-slate-300">Selecciona tu usuario</label>
+                <select
+                  className="input"
+                  value={selectedRecovery}
+                  onChange={(e) => setSelectedRecovery(e.target.value)}
+                >
+                  {recoveryList.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} — {user.id}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn bg-emerald-500 hover:bg-emerald-400 text-slate-900"
+                  disabled={!selectedRecovery}
+                  onClick={() => {
+                    const target = recoveryList.find((user) => user.id === selectedRecovery);
+                    if (!target) return;
+                    setClientId(target.id);
+                    setVoterName(target.name);
+                    saveName(target.name);
+                    clearCacheByPrefix('/api/results');
+                    clearCacheByPrefix('/api/voters');
+                    clearCacheByPrefix('/api/vote');
+                    setRecoverySuccess('Usuario recuperado. Tus votos se cargarán al volver a Votar.');
+                  }}
+                >
+                  Usar este usuario
+                </button>
+                {recoverySuccess && <p className="text-emerald-300 text-xs">{recoverySuccess}</p>}
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </main>

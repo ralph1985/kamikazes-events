@@ -1,7 +1,7 @@
 import { kv } from '@vercel/kv';
 import { formatDayKey, parseDayKey } from '../dates';
 import { slugify } from '../slug';
-import type { EventItem, StorageDriver, VoteResult } from './StorageDriver';
+import type { EventItem, StorageDriver, VoteResult, VoterInfo } from './StorageDriver';
 
 export class KvDriver implements StorageDriver {
   async getEvents(): Promise<EventItem[]> {
@@ -99,6 +99,25 @@ export class KvDriver implements StorageDriver {
       voters.push({ name, days: selection });
     }
     return voters;
+  }
+
+  async listVoters(): Promise<VoterInfo[]> {
+    const events = await this.getEvents();
+    const voterMap = new Map<string, string>();
+
+    for (const event of events) {
+      const voterKeys = await this.getVoterKeys(event.id);
+      for (const voterKey of voterKeys) {
+        if (!voterMap.has(voterKey)) {
+          const name = (await kv.get<string>(this.voterNameKey(event.id, voterKey))) || 'Anónimo';
+          voterMap.set(voterKey, name);
+        }
+      }
+    }
+
+    return Array.from(voterMap.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
   }
 
   private buildVoterKey(raw: string): string {

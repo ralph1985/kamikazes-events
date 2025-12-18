@@ -115,6 +115,10 @@ export class MockDriver implements StorageDriver {
     return voters;
   }
 
+  async listVoters() {
+    return Array.from(this.voterNames.entries()).map(([id, name]) => ({ id, name }));
+  }
+
   private normalizeId(id: string): string {
     return slugify(id.trim().toLowerCase()) || 'anon';
   }
