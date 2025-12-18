@@ -26,7 +26,8 @@ export async function GET(request: Request) {
     );
     const voters = (await driver.getVotersSelections(eventId)).map((voter) => ({
       name: voter.name,
-      days: voter.days.filter((day) => allowed.has(day))
+      days: voter.days.filter((day) => allowed.has(day)),
+      weight: typeof voter.weight === 'number' && voter.weight > 0 ? voter.weight : 1
     }));
     return NextResponse.json({ voters });
   } catch (error) {
