@@ -116,7 +116,12 @@ export class MockDriver implements StorageDriver {
   }
 
   async listVoters() {
-    return Array.from(this.voterNames.entries()).map(([id, name]) => ({ id, name }));
+    return Array.from(this.voterNames.entries())
+      .filter(([id]) => {
+        const selection = this.voterSelections.get('')?.get(id) ?? [];
+        return selection.length > 0;
+      })
+      .map(([id, name]) => ({ id, name }));
   }
 
   private normalizeId(id: string): string {
