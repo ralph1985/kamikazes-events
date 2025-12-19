@@ -11,7 +11,11 @@ import {
   getStoredName,
   saveEvent,
 } from "../lib/client";
-import type { EventItem, VoteResult, VoterSelection } from "../lib/storage/StorageDriver";
+import type {
+  EventItem,
+  VoteResult,
+  VoterSelection,
+} from "../lib/storage/StorageDriver";
 import { DescriptionCard } from "../components/DescriptionCard";
 import { HeaderBar } from "../components/HeaderBar";
 import { clearCacheByPrefix } from "../lib/cache";
@@ -39,7 +43,9 @@ export default function ResultsPage() {
     [selectedEventData?.window.end, selectedEventData?.window.start]
   );
   const [modalDay, setModalDay] = useState<string | null>(null);
-  const [modalVoters, setModalVoters] = useState<{ name: string; weight?: number }[]>([]);
+  const [modalVoters, setModalVoters] = useState<
+    { name: string; weight?: number }[]
+  >([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState<string>("");
   const [viewMode, setViewMode] = useState<"day" | "person">("day");
@@ -50,21 +56,28 @@ export default function ResultsPage() {
     setResults(data);
   }, []);
 
-  const refreshPeople = useCallback(async (eventId: string) => {
-    const cacheKey = `/api/voters/people?eventId=${encodeURIComponent(eventId)}`;
-    const allowedSet = new Set(allowedDayKeysForEvent);
-    const data = await fetchJsonWithCache<{ voters: VoterSelection[] }>(cacheKey);
-    const filtered = data.voters
-      .map((voter) => ({
-        ...voter,
-        days: voter.days.filter((day) => allowedSet.has(day)),
-      }))
-      .filter((voter) => voter.days.length > 0);
-    const sorted = [...filtered].sort((a, b) =>
-      a.name.localeCompare(b.name, "es", { sensitivity: "base" })
-    );
-    setPeopleResults(sorted);
-  }, [allowedDayKeysForEvent]);
+  const refreshPeople = useCallback(
+    async (eventId: string) => {
+      const cacheKey = `/api/voters/people?eventId=${encodeURIComponent(
+        eventId
+      )}`;
+      const allowedSet = new Set(allowedDayKeysForEvent);
+      const data = await fetchJsonWithCache<{ voters: VoterSelection[] }>(
+        cacheKey
+      );
+      const filtered = data.voters
+        .map((voter) => ({
+          ...voter,
+          days: voter.days.filter((day) => allowedSet.has(day)),
+        }))
+        .filter((voter) => voter.days.length > 0);
+      const sorted = [...filtered].sort((a, b) =>
+        a.name.localeCompare(b.name, "es", { sensitivity: "base" })
+      );
+      setPeopleResults(sorted);
+    },
+    [allowedDayKeysForEvent]
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -88,7 +101,8 @@ export default function ResultsPage() {
         const storedEventId =
           typeof window !== "undefined" ? getStoredEvent() : null;
         const defaultEventId =
-          storedEventId && eventsData.some((event) => event.id === storedEventId)
+          storedEventId &&
+          eventsData.some((event) => event.id === storedEventId)
             ? storedEventId
             : eventsData[0]?.id ?? "";
         setSelectedEvent(defaultEventId);
@@ -135,9 +149,9 @@ export default function ResultsPage() {
       const cacheKey = `/api/voters?eventId=${encodeURIComponent(
         selectedEvent
       )}&day=${encodeURIComponent(day)}`;
-      const payload = await fetchJsonWithCache<{ voters: { name: string; weight?: number }[] }>(
-        cacheKey
-      );
+      const payload = await fetchJsonWithCache<{
+        voters: { name: string; weight?: number }[];
+      }>(cacheKey);
       setModalVoters(payload.voters);
     } catch (error) {
       setModalError(
@@ -164,7 +178,11 @@ export default function ResultsPage() {
           {
             href: "/settings",
             label: "Preferencias",
-            icon: <span className="inline-flex h-4 w-4 items-center justify-center">⚙️</span>,
+            icon: (
+              <span className="inline-flex h-4 w-4 items-center justify-center">
+                ⚙️
+              </span>
+            ),
             ariaLabel: "Preferencias",
           },
         ]}
@@ -213,19 +231,24 @@ export default function ResultsPage() {
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Resultados
             </p>
-            <p className="text-lg font-semibold text-slate-100">
-              {viewMode === "day" ? "Votos por día" : "Votos por persona"}
-            </p>
           </div>
           <div className="flex items-center gap-2">
             <button
-              className={`tag ${viewMode === "day" ? "bg-emerald-500/20 border-emerald-400 text-emerald-100" : ""}`}
+              className={`tag ${
+                viewMode === "day"
+                  ? "bg-emerald-500/20 border-emerald-400 text-emerald-100"
+                  : "opacity-70"
+              }`}
               onClick={() => setViewMode("day")}
             >
               Por día
             </button>
             <button
-              className={`tag ${viewMode === "person" ? "bg-emerald-500/20 border-emerald-400 text-emerald-100" : ""}`}
+              className={`tag ${
+                viewMode === "person"
+                  ? "bg-emerald-500/20 border-emerald-400 text-emerald-100"
+                  : "opacity-70"
+              }`}
               onClick={() => setViewMode("person")}
             >
               Por persona
@@ -252,7 +275,9 @@ export default function ResultsPage() {
                   <span className="text-slate-200 font-semibold">
                     {formatDisplay(result.day)}
                   </span>
-                  <span className="text-slate-400 text-xs">Clave: {result.day}</span>
+                  <span className="text-slate-400 text-xs">
+                    Clave: {result.day}
+                  </span>
                 </div>
                 <span className="text-emerald-300 font-bold text-lg">
                   {result.votes}
@@ -262,19 +287,26 @@ export default function ResultsPage() {
           </div>
         )}
 
-        {viewMode === "person" && peopleResults.length === 0 && !resultsLoading && (
-          <p className="text-slate-400 text-sm">
-            Aún no hay votos registrados por persona en este evento.
-          </p>
-        )}
+        {viewMode === "person" &&
+          peopleResults.length === 0 &&
+          !resultsLoading && (
+            <p className="text-slate-400 text-sm">
+              Aún no hay votos registrados por persona en este evento.
+            </p>
+          )}
 
         {viewMode === "person" && peopleResults.length > 0 && (
           <div className="list">
             {peopleResults.map((person) => (
-              <div key={person.name} className="list-item flex-col items-center gap-2 text-center">
+              <div
+                key={person.name}
+                className="list-item flex-col items-center gap-2 text-center"
+              >
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-                  <span className="text-slate-100 font-semibold">{person.name}</span>
+                  <span className="text-slate-100 font-semibold">
+                    {person.name}
+                  </span>
                   <span className="text-xs text-slate-400">
                     Peso: {person.weight ?? 1}
                   </span>
@@ -284,7 +316,10 @@ export default function ResultsPage() {
                     <span className="tag">Sin días seleccionados</span>
                   ) : (
                     person.days.map((day) => (
-                      <span key={`${person.name}-${day}`} className="tag">
+                      <span
+                        key={`${person.name}-${day}`}
+                        className="tag"
+                      >
                         {formatDisplay(day)}
                       </span>
                     ))
@@ -294,47 +329,58 @@ export default function ResultsPage() {
             ))}
           </div>
         )}
-    </section>
+      </section>
 
-    {errorMessage && (
-      <p className="text-red-300 text-sm">Aviso: {errorMessage}</p>
-    )}
+      {errorMessage && (
+        <p className="text-red-300 text-sm">Aviso: {errorMessage}</p>
+      )}
 
-    {modalDay && (
-      <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-        <div className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-slate-400">Votantes</p>
-              <p className="text-lg font-semibold text-slate-50">{formatDisplay(modalDay)}</p>
+      {modalDay && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  Votantes
+                </p>
+                <p className="text-lg font-semibold text-slate-50">
+                  {formatDisplay(modalDay)}
+                </p>
+              </div>
+              <button
+                onClick={closeModal}
+                className="text-slate-400 hover:text-slate-100 text-sm"
+                aria-label="Cerrar"
+              >
+                ✕
+              </button>
             </div>
-            <button
-              onClick={closeModal}
-              className="text-slate-400 hover:text-slate-100 text-sm"
-              aria-label="Cerrar"
-            >
-              ✕
-            </button>
+            {modalLoading && (
+              <p className="text-slate-300 text-sm">Cargando...</p>
+            )}
+            {modalError && <p className="text-red-300 text-sm">{modalError}</p>}
+            {!modalLoading && !modalError && modalVoters.length === 0 && (
+              <p className="text-slate-400 text-sm">Sin votos en este día.</p>
+            )}
+            {!modalLoading && !modalError && modalVoters.length > 0 && (
+              <ul className="text-slate-100 text-sm space-y-2">
+                {modalVoters.map((voter, idx) => (
+                  <li
+                    key={`${voter.name}-${idx}`}
+                    className="flex items-center gap-2"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                    <span>{voter.name}</span>
+                    <span className="text-xs text-slate-400">
+                      (peso: {voter.weight ?? 1})
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-          {modalLoading && <p className="text-slate-300 text-sm">Cargando...</p>}
-          {modalError && <p className="text-red-300 text-sm">{modalError}</p>}
-          {!modalLoading && !modalError && modalVoters.length === 0 && (
-            <p className="text-slate-400 text-sm">Sin votos en este día.</p>
-          )}
-          {!modalLoading && !modalError && modalVoters.length > 0 && (
-            <ul className="text-slate-100 text-sm space-y-2">
-              {modalVoters.map((voter, idx) => (
-                <li key={`${voter.name}-${idx}`} className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-                  <span>{voter.name}</span>
-                  <span className="text-xs text-slate-400">(peso: {voter.weight ?? 1})</span>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
-      </div>
-    )}
-  </main>
-);
+      )}
+    </main>
+  );
 }
