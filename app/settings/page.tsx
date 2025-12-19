@@ -114,6 +114,7 @@ export default function SettingsPage() {
       if (events.length > 0 && clientId) {
         await fetch('/api/voter-name', {
           method: 'POST',
+          cache: 'no-store',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             voterId: clientId,
@@ -126,6 +127,7 @@ export default function SettingsPage() {
 
         await fetch('/api/voter-weight', {
           method: 'POST',
+          cache: 'no-store',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             voterId: clientId,
@@ -233,6 +235,7 @@ export default function SettingsPage() {
                   data.map((event) =>
                     fetch('/api/vote', {
                       method: 'POST',
+                      cache: 'no-store',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         eventId: event.id,
