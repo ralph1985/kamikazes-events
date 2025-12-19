@@ -52,6 +52,22 @@ export default function Page() {
     () => isVotingClosed(selectedEventData?.closeAt),
     [selectedEventData?.closeAt]
   );
+  const closeLabel = useMemo(() => {
+    if (!selectedEventData?.closeAt) return null;
+    try {
+      const iso = new Date(selectedEventData.closeAt);
+      return iso.toLocaleString("es-ES", {
+        timeZone: "Europe/Madrid",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return selectedEventData.closeAt;
+    }
+  }, [selectedEventData?.closeAt]);
   const allowedDayKeysForEvent = useMemo(
     () =>
       allowedDaysWithinWindow(
@@ -294,9 +310,9 @@ export default function Page() {
             selección se actualiza al momento.
           </p>
         )}
-        {votingClosed && (
+        {votingClosed && closeLabel && (
           <p className="text-amber-300 text-sm">
-            Las votaciones están cerradas desde el 21/12/2026 a las 12:00.
+            Las votaciones están cerradas desde {closeLabel}.
           </p>
         )}
         {voteState === "error" && (
