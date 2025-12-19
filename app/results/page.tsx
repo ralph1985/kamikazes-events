@@ -236,7 +236,7 @@ export default function ResultsPage() {
             <button
               className={`tag ${
                 viewMode === "day"
-                  ? "bg-emerald-500/20 border-emerald-400 text-emerald-100"
+                  ? "bg-emerald-600/30 border-emerald-400 text-emerald-100"
                   : "opacity-70"
               }`}
               onClick={() => setViewMode("day")}
@@ -246,7 +246,7 @@ export default function ResultsPage() {
             <button
               className={`tag ${
                 viewMode === "person"
-                  ? "bg-emerald-500/20 border-emerald-400 text-emerald-100"
+                  ? "bg-emerald-600/30 border-emerald-400 text-emerald-100"
                   : "opacity-70"
               }`}
               onClick={() => setViewMode("person")}
