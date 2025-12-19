@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       : null;
 
     if (!voterId || !name) {
-      return NextResponse.json({ message: 'voterId y name son obligatorios' }, { status: 400 });
+      return jsonNoStore({ message: 'voterId y name son obligatorios' }, { status: 400 });
     }
 
     const driver = await ensureDefaultEvent();

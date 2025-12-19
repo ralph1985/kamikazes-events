@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const eventId = searchParams.get('eventId')?.trim();
 
   if (!eventId) {
-    return NextResponse.json({ message: 'eventId es obligatorio' }, { status: 400 });
+    return jsonNoStore({ message: 'eventId es obligatorio' }, { status: 400 });
   }
 
   try {
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     const events = await driver.getEvents();
     const exists = events.some((event) => event.id === eventId);
     if (!exists) {
-      return NextResponse.json({ message: 'Evento no encontrado' }, { status: 400 });
+      return jsonNoStore({ message: 'Evento no encontrado' }, { status: 400 });
     }
 
     const allowed = new Set(

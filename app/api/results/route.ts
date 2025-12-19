@@ -11,14 +11,14 @@ export async function GET(request: Request) {
     const eventId = searchParams.get('eventId')?.trim();
 
     if (!eventId) {
-      return NextResponse.json({ message: 'eventId es obligatorio' }, { status: 400 });
+      return jsonNoStore({ message: 'eventId es obligatorio' }, { status: 400 });
     }
 
     const driver = await ensureDefaultEvent();
     const events = await driver.getEvents();
     const exists = events.some((event) => event.id === eventId);
     if (!exists) {
-      return NextResponse.json({ message: 'El evento no existe' }, { status: 400 });
+      return jsonNoStore({ message: 'El evento no existe' }, { status: 400 });
     }
 
     const results = await driver.getResults(eventId);
