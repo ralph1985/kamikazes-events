@@ -31,15 +31,22 @@ export async function GET(request: Request) {
         name: voter.name,
         weight: typeof voter.weight === 'number' && voter.weight > 0 ? voter.weight : 1
       }));
-    return NextResponse.json(
-      { voters },
-      { headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' } }
-    );
+    const headers = {
+      'Cache-Control': 'no-store, max-age=0, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0'
+    };
+    return NextResponse.json({ voters }, { headers });
   } catch (error) {
     console.error('GET /api/voters', error);
+    const headers = {
+      'Cache-Control': 'no-store, max-age=0, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0'
+    };
     return NextResponse.json(
       { message: 'No se pudo obtener la lista de votos' },
-      { status: 500, headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' } }
+      { status: 500, headers }
     );
   }
 }
