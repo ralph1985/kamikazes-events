@@ -106,7 +106,9 @@ export class KvDriver implements StorageDriver {
     const voters: { name: string; days: string[]; weight?: number }[] = [];
     for (const voterKey of voterKeys) {
       const selection = (await kv.get<string[]>(this.voterStoreKey(eventId, voterKey))) || [];
-      const name = (await kv.get<string>(this.voterNameKey(eventId, voterKey))) || 'Anónimo';
+      if (selection.length === 0) continue;
+      const name = (await kv.get<string>(this.voterNameKey(eventId, voterKey))) || '';
+      if (!name.trim()) continue; // evita registros huérfanos o borrados
       const weight = await this.getVoterWeight(eventId, voterKey);
       voters.push({ name, days: selection, weight });
     }
