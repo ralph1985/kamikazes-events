@@ -49,13 +49,15 @@ export default function SettingsPage() {
       try {
         const cacheKey = '/api/events';
         const cached = getCachedJson<EventItem[]>(cacheKey, EVENTS_CACHE_TTL_MS);
+        let data: EventItem[];
         if (cached) {
-          setEvents(cached);
+          data = cached;
+        } else {
+          const res = await fetch(cacheKey, { cache: 'no-store' });
+          if (!res.ok) throw new Error('No se pudieron cargar los eventos');
+          data = await res.json();
+          setCachedJson(cacheKey, data, EVENTS_CACHE_TTL_MS);
         }
-        const res = await fetch(cacheKey, { cache: 'no-store' });
-        if (!res.ok) throw new Error('No se pudieron cargar los eventos');
-        const data: EventItem[] = await res.json();
-        setCachedJson(cacheKey, data, EVENTS_CACHE_TTL_MS);
         setEvents(data);
         const stored = typeof window !== 'undefined' ? getStoredEvent() : null;
         const defaultEvent = stored && data.some((e) => e.id === stored) ? stored : data[0]?.id ?? '';
