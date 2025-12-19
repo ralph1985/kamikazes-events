@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
 import { ensureDefaultEvent } from '../../lib/storage';
 import { allowedDaysWithinWindow } from '../../lib/dates';
+import { jsonNoStore } from '../../lib/api';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
@@ -28,9 +29,9 @@ export async function GET(request: Request) {
       )
     );
     const filtered = results.filter((result) => allowed.has(result.day));
-    return NextResponse.json(filtered);
+    return jsonNoStore(filtered);
   } catch (error) {
     console.error('GET /api/results', error);
-    return NextResponse.json({ message: 'Error al obtener resultados' }, { status: 500 });
+    return jsonNoStore({ message: 'Error al obtener resultados' }, { status: 500 });
   }
 }

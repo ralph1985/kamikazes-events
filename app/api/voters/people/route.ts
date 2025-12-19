@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server';
 import { ensureDefaultEvent } from '../../../lib/storage';
 import { allowedDaysWithinWindow } from '../../../lib/dates';
+import { jsonNoStore } from '../../../lib/api';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -29,9 +32,9 @@ export async function GET(request: Request) {
       days: voter.days.filter((day) => allowed.has(day)),
       weight: typeof voter.weight === 'number' && voter.weight > 0 ? voter.weight : 1
     }));
-    return NextResponse.json({ voters });
+    return jsonNoStore({ voters });
   } catch (error) {
     console.error('GET /api/voters/people', error);
-    return NextResponse.json({ message: 'Error interno' }, { status: 500 });
+    return jsonNoStore({ message: 'Error interno' }, { status: 500 });
   }
 }

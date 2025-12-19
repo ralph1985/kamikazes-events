@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
 import { allowedDayKeys, formatDayKey, isWithinVoteWindow, parseDayKey } from '../../lib/dates';
 import { ensureDefaultEvent } from '../../lib/storage';
+import { jsonNoStore } from '../../lib/api';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function POST(request: Request) {
   try {
@@ -20,19 +21,19 @@ export async function POST(request: Request) {
         : [];
 
     if (!name) {
-      return NextResponse.json({ message: 'El nombre es obligatorio' }, { status: 400 });
+      return jsonNoStore({ message: 'El nombre es obligatorio' }, { status: 400 });
     }
     if (!voterId) {
-      return NextResponse.json({ message: 'No se pudo identificar al votante' }, { status: 400 });
+      return jsonNoStore({ message: 'No se pudo identificar al votante' }, { status: 400 });
     }
     if (!eventId) {
-      return NextResponse.json({ message: 'eventId es obligatorio' }, { status: 400 });
+      return jsonNoStore({ message: 'eventId es obligatorio' }, { status: 400 });
     }
     const driver = await ensureDefaultEvent();
     const events = await driver.getEvents();
     const event = events.find((item) => item.id === eventId);
     if (!event) {
-      return NextResponse.json({ message: 'El evento no existe' }, { status: 400 });
+      return jsonNoStore({ message: 'El evento no existe' }, { status: 400 });
     }
 
     let normalizedDays: string[];
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
               )
             );
     } catch {
-      return NextResponse.json(
+      return jsonNoStore(
         {
           message: `El día no es válido o está fuera de rango (${allowedDayKeys.join(', ')})`
         },
@@ -59,10 +60,10 @@ export async function POST(request: Request) {
     }
 
     await driver.vote(eventId, voterId, name, normalizedDays);
-    return NextResponse.json({ ok: true, replacedDays: normalizedDays });
+    return jsonNoStore({ ok: true, replacedDays: normalizedDays });
   } catch (error) {
     console.error('POST /api/vote', error);
-    return NextResponse.json({ message: 'No se pudo registrar el voto' }, { status: 500 });
+    return jsonNoStore({ message: 'No se pudo registrar el voto' }, { status: 500 });
   }
 }
 
@@ -72,14 +73,14 @@ export async function GET(request: Request) {
     const eventId = searchParams.get('eventId')?.trim();
     const voterId = searchParams.get('voterId')?.trim();
     if (!eventId || !voterId) {
-      return NextResponse.json({ message: 'eventId y voterId son obligatorios' }, { status: 400 });
+      return jsonNoStore({ message: 'eventId y voterId son obligatorios' }, { status: 400 });
     }
 
     const driver = await ensureDefaultEvent();
     const events = await driver.getEvents();
     const event = events.find((item) => item.id === eventId);
     if (!event) {
-      return NextResponse.json({ message: 'El evento no existe' }, { status: 400 });
+      return jsonNoStore({ message: 'El evento no existe' }, { status: 400 });
     }
 
     const selection = await driver.getSelection(eventId, voterId);
@@ -87,9 +88,9 @@ export async function GET(request: Request) {
       .filter((day) => isWithinVoteWindow(day, event.window.start, event.window.end))
       .map((day) => formatDayKey(parseDayKey(day)));
 
-    return NextResponse.json({ days: normalized });
+    return jsonNoStore({ days: normalized });
   } catch (error) {
     console.error('GET /api/vote', error);
-    return NextResponse.json({ message: 'No se pudo obtener el voto' }, { status: 500 });
+    return jsonNoStore({ message: 'No se pudo obtener el voto' }, { status: 500 });
   }
 }

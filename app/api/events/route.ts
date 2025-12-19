@@ -1,16 +1,17 @@
-import { NextResponse } from 'next/server';
 import { ensureDefaultEvent } from '../../lib/storage';
+import { jsonNoStore } from '../../lib/api';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   try {
     const driver = await ensureDefaultEvent();
     const events = await driver.getEvents();
-    return NextResponse.json(events);
+    return jsonNoStore(events);
   } catch (error) {
     console.error('GET /api/events', error);
-    return NextResponse.json({ message: 'Error al obtener eventos' }, { status: 500 });
+    return jsonNoStore({ message: 'Error al obtener eventos' }, { status: 500 });
   }
 }
 
@@ -26,14 +27,14 @@ export async function POST(request: Request) {
         : undefined;
 
     if (!name) {
-      return NextResponse.json({ message: 'El nombre del evento es obligatorio' }, { status: 400 });
+      return jsonNoStore({ message: 'El nombre del evento es obligatorio' }, { status: 400 });
     }
 
     const driver = await ensureDefaultEvent();
     const event = await driver.createEvent(name, window);
-    return NextResponse.json(event);
+    return jsonNoStore(event);
   } catch (error) {
     console.error('POST /api/events', error);
-    return NextResponse.json({ message: 'No se pudo crear el evento' }, { status: 500 });
+    return jsonNoStore({ message: 'No se pudo crear el evento' }, { status: 500 });
   }
 }

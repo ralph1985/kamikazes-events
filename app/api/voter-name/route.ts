@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
 import { ensureDefaultEvent } from '../../lib/storage';
+import { jsonNoStore } from '../../lib/api';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function POST(request: Request) {
   try {
@@ -28,9 +29,9 @@ export async function POST(request: Request) {
       )
     );
 
-    return NextResponse.json({ ok: true });
+    return jsonNoStore({ ok: true });
   } catch (error) {
     console.error('POST /api/voter-name', error);
-    return NextResponse.json({ message: 'No se pudo actualizar el nombre' }, { status: 500 });
+    return jsonNoStore({ message: 'No se pudo actualizar el nombre' }, { status: 500 });
   }
 }
