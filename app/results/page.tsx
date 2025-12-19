@@ -14,8 +14,9 @@ import {
 import type { EventItem, VoteResult, VoterSelection } from "../lib/storage/StorageDriver";
 import { DescriptionCard } from "../components/DescriptionCard";
 import { HeaderBar } from "../components/HeaderBar";
-import { clearCacheByPrefix, getCachedJson, setCachedJson } from "../lib/cache";
+import { clearCacheByPrefix } from "../lib/cache";
 import { EVENTS_CACHE_TTL_MS } from "../lib/constants";
+import { fetchJsonWithCache } from "../lib/apiClient";
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -45,41 +46,14 @@ export default function ResultsPage() {
 
   const refreshResults = useCallback(async (eventId: string) => {
     const cacheKey = `/api/results?eventId=${encodeURIComponent(eventId)}`;
-    const cached = getCachedJson<VoteResult[]>(cacheKey);
-    if (cached) {
-      setResults(cached);
-      return;
-    }
-    const res = await fetch(cacheKey, {
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error("No se pudieron cargar los resultados");
-    const data: VoteResult[] = await res.json();
-    setCachedJson(cacheKey, data);
+    const data = await fetchJsonWithCache<VoteResult[]>(cacheKey);
     setResults(data);
   }, []);
 
   const refreshPeople = useCallback(async (eventId: string) => {
     const cacheKey = `/api/voters/people?eventId=${encodeURIComponent(eventId)}`;
-    const cached = getCachedJson<{ voters: VoterSelection[] }>(cacheKey);
     const allowedSet = new Set(allowedDayKeysForEvent);
-    if (cached) {
-      const filteredCached = cached.voters
-        .map((voter) => ({
-          ...voter,
-          days: voter.days.filter((day) => allowedSet.has(day)),
-        }))
-        .filter((voter) => voter.days.length > 0);
-      const sortedCached = [...filteredCached].sort((a, b) =>
-        a.name.localeCompare(b.name, "es", { sensitivity: "base" })
-      );
-      setPeopleResults(sortedCached);
-      return;
-    }
-
-    const res = await fetch(cacheKey, { cache: "no-store" });
-    if (!res.ok) throw new Error("No se pudieron cargar los votos por persona");
-    const data: { voters: VoterSelection[] } = await res.json();
+    const data = await fetchJsonWithCache<{ voters: VoterSelection[] }>(cacheKey);
     const filtered = data.voters
       .map((voter) => ({
         ...voter,
@@ -89,7 +63,6 @@ export default function ResultsPage() {
     const sorted = [...filtered].sort((a, b) =>
       a.name.localeCompare(b.name, "es", { sensitivity: "base" })
     );
-    setCachedJson(cacheKey, { voters: data.voters });
     setPeopleResults(sorted);
   }, [allowedDayKeysForEvent]);
 
@@ -106,16 +79,11 @@ export default function ResultsPage() {
       setEventsLoading(true);
       try {
         const cacheKey = "/api/events";
-        const cached = getCachedJson<EventItem[]>(cacheKey, EVENTS_CACHE_TTL_MS);
-        let eventsData: EventItem[];
-        if (cached) {
-          eventsData = cached;
-        } else {
-          const res = await fetch(cacheKey, { cache: "no-store" });
-          if (!res.ok) throw new Error("No se pudieron cargar los eventos");
-          eventsData = await res.json();
-          setCachedJson(cacheKey, eventsData, EVENTS_CACHE_TTL_MS);
-        }
+        const eventsData = await fetchJsonWithCache<EventItem[]>(
+          cacheKey,
+          {},
+          { cacheKey, ttlMs: EVENTS_CACHE_TTL_MS }
+        );
         setEvents(eventsData);
         const storedEventId =
           typeof window !== "undefined" ? getStoredEvent() : null;
@@ -167,21 +135,10 @@ export default function ResultsPage() {
       const cacheKey = `/api/voters?eventId=${encodeURIComponent(
         selectedEvent
       )}&day=${encodeURIComponent(day)}`;
-      const cached = getCachedJson<{ voters: { name: string; weight?: number }[] }>(cacheKey);
-      if (cached) {
-        setModalVoters(cached.voters);
-      } else {
-        const res = await fetch(cacheKey, { cache: "no-store" });
-        if (!res.ok) {
-          const payload = await res.json().catch(() => ({}));
-          throw new Error(
-            payload.message || "No se pudo cargar el detalle de votos"
-          );
-        }
-        const payload: { voters: { name: string; weight?: number }[] } = await res.json();
-        setCachedJson(cacheKey, payload);
-        setModalVoters(payload.voters);
-      }
+      const payload = await fetchJsonWithCache<{ voters: { name: string; weight?: number }[] }>(
+        cacheKey
+      );
+      setModalVoters(payload.voters);
     } catch (error) {
       setModalError(
         error instanceof Error ? error.message : "Error al cargar el detalle"

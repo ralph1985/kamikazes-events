@@ -22,8 +22,9 @@ import { LoadingOverlay } from "./components/LoadingOverlay";
 import { DescriptionCard } from "./components/DescriptionCard";
 import { HeaderBar } from "./components/HeaderBar";
 import Link from "next/link";
-import { clearCacheByPrefix, getCachedJson, setCachedJson } from "./lib/cache";
+import { clearCacheByPrefix } from "./lib/cache";
 import { EVENTS_CACHE_TTL_MS } from "./lib/constants";
+import { fetchJsonWithCache } from "./lib/apiClient";
 
 type VoteState = "idle" | "loading" | "success" | "error";
 
@@ -79,16 +80,7 @@ export default function Page() {
 
   const refreshResults = useCallback(async (eventId: string) => {
     const cacheKey = `/api/results?eventId=${encodeURIComponent(eventId)}`;
-    const cached = getCachedJson<VoteResult[]>(cacheKey);
-    if (cached) {
-      setResults(cached);
-      return;
-    }
-
-    const res = await fetch(cacheKey, { cache: "no-store" });
-    if (!res.ok) throw new Error("No se pudieron cargar los resultados");
-    const data: VoteResult[] = await res.json();
-    setCachedJson(cacheKey, data);
+    const data = await fetchJsonWithCache<VoteResult[]>(cacheKey);
     setResults(data);
   }, []);
 
@@ -104,17 +96,11 @@ export default function Page() {
     const fetchEvents = async () => {
       setEventsLoading(true);
       try {
-        const cacheKey = "/api/events";
-        const cached = getCachedJson<EventItem[]>(cacheKey, EVENTS_CACHE_TTL_MS);
-        let eventsData: EventItem[];
-        if (cached) {
-          eventsData = cached;
-        } else {
-          const res = await fetch(cacheKey, { cache: "no-store" });
-          if (!res.ok) throw new Error("No se pudieron cargar los eventos");
-          eventsData = await res.json();
-          setCachedJson(cacheKey, eventsData, EVENTS_CACHE_TTL_MS);
-        }
+        const eventsData = await fetchJsonWithCache<EventItem[]>(
+          "/api/events",
+          {},
+          { cacheKey: "/api/events", ttlMs: EVENTS_CACHE_TTL_MS }
+        );
         setEvents(eventsData);
 
         const storedEventId =
@@ -168,20 +154,9 @@ export default function Page() {
           const cacheKey = `/api/vote?eventId=${encodeURIComponent(
             selectedEvent
           )}&voterId=${encodeURIComponent(clientId)}`;
-          const cached = getCachedJson<{ days?: string[] }>(cacheKey);
-          if (cached?.days) {
-            setSelectedDates(cached.days.map((day) => parseDayKey(day)));
-          } else {
-            const res = await fetch(cacheKey, { cache: "no-store" });
-            if (res.ok) {
-              const payload: { days?: string[] } = await res.json();
-              const days = payload.days ?? [];
-              setCachedJson(cacheKey, payload);
-              setSelectedDates(days.map((day) => parseDayKey(day)));
-            } else {
-              setSelectedDates([]);
-            }
-          }
+          const payload = await fetchJsonWithCache<{ days?: string[] }>(cacheKey);
+          const days = payload.days ?? [];
+          setSelectedDates(days.map((day) => parseDayKey(day)));
         } catch {
           setSelectedDates([]);
         }

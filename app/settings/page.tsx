@@ -16,9 +16,10 @@ import {
   saveWeight,
   setClientId as persistClientId
 } from '../lib/client';
-import { getCachedJson, setCachedJson, clearCacheByPrefix } from '../lib/cache';
+import { clearCacheByPrefix } from '../lib/cache';
 import { EVENTS_CACHE_TTL_MS } from '../lib/constants';
 import type { EventItem } from '../lib/storage/StorageDriver';
+import { fetchJsonWithCache } from '../lib/apiClient';
 
 export default function SettingsPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -48,16 +49,11 @@ export default function SettingsPage() {
       setEventsLoading(true);
       try {
         const cacheKey = '/api/events';
-        const cached = getCachedJson<EventItem[]>(cacheKey, EVENTS_CACHE_TTL_MS);
-        let data: EventItem[];
-        if (cached) {
-          data = cached;
-        } else {
-          const res = await fetch(cacheKey, { cache: 'no-store' });
-          if (!res.ok) throw new Error('No se pudieron cargar los eventos');
-          data = await res.json();
-          setCachedJson(cacheKey, data, EVENTS_CACHE_TTL_MS);
-        }
+        const data = await fetchJsonWithCache<EventItem[]>(
+          cacheKey,
+          {},
+          { cacheKey, ttlMs: EVENTS_CACHE_TTL_MS }
+        );
         setEvents(data);
         const stored = typeof window !== 'undefined' ? getStoredEvent() : null;
         const defaultEvent = stored && data.some((e) => e.id === stored) ? stored : data[0]?.id ?? '';
@@ -65,20 +61,10 @@ export default function SettingsPage() {
         if (defaultEvent && clientId) {
           try {
             const weightKey = `/api/voter-weight?eventId=${encodeURIComponent(defaultEvent)}&voterId=${encodeURIComponent(clientId)}`;
-            const cachedWeight = getCachedJson<{ weight?: number }>(weightKey);
-            if (cachedWeight?.weight && cachedWeight.weight > 0) {
-              setVoterWeight(cachedWeight.weight);
-              saveWeight(cachedWeight.weight);
-            } else {
-              const resWeight = await fetch(weightKey, { cache: 'no-store' });
-              if (resWeight.ok) {
-                const payload: { weight?: number } = await resWeight.json();
-                if (typeof payload.weight === 'number' && payload.weight > 0) {
-                  setVoterWeight(payload.weight);
-                  saveWeight(payload.weight);
-                  setCachedJson(weightKey, payload);
-                }
-              }
+            const payload = await fetchJsonWithCache<{ weight?: number }>(weightKey);
+            if (typeof payload.weight === 'number' && payload.weight > 0) {
+              setVoterWeight(payload.weight);
+              saveWeight(payload.weight);
             }
           } catch {
             // ignore load errors, keep local weight
@@ -293,24 +279,17 @@ export default function SettingsPage() {
                   setRecoveryError('');
                   setRecoverySuccess('');
                   try {
-                const cacheKey = '/api/voters/recovery';
-                const cached = getCachedJson<{ voters: { id: string; name: string }[] }>(cacheKey);
-                if (cached) {
-                  setRecoveryList(cached.voters);
-                  setSelectedRecovery(cached.voters[0]?.id ?? '');
-                } else {
-                  const res = await fetch(cacheKey, { cache: 'no-store' });
-                  if (!res.ok) throw new Error('No se pudo cargar la lista de usuarios');
-                  const payload: { voters: { id: string; name: string }[] } = await res.json();
-                  setCachedJson(cacheKey, payload);
-                  setRecoveryList(payload.voters);
-                  setSelectedRecovery(payload.voters[0]?.id ?? '');
-                }
-              } catch (error) {
-                setRecoveryError(error instanceof Error ? error.message : 'Error al recuperar usuarios');
-              } finally {
-                setRecoveryLoading(false);
-              }
+                    const cacheKey = '/api/voters/recovery';
+                    const payload = await fetchJsonWithCache<{ voters: { id: string; name: string }[] }>(
+                      cacheKey
+                    );
+                    setRecoveryList(payload.voters);
+                    setSelectedRecovery(payload.voters[0]?.id ?? '');
+                  } catch (error) {
+                    setRecoveryError(error instanceof Error ? error.message : 'Error al recuperar usuarios');
+                  } finally {
+                    setRecoveryLoading(false);
+                  }
                 }}
               >
                 {recoveryLoading ? 'Cargando...' : 'Mostrar usuarios'}
