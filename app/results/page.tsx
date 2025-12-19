@@ -164,20 +164,24 @@ export default function ResultsPage() {
     setModalLoading(true);
     setModalError("");
     try {
-      const res = await fetch(
-        `/api/voters?eventId=${encodeURIComponent(
-          selectedEvent
-        )}&day=${encodeURIComponent(day)}`,
-        { cache: "no-store" }
-      );
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(
-          payload.message || "No se pudo cargar el detalle de votos"
-        );
+      const cacheKey = `/api/voters?eventId=${encodeURIComponent(
+        selectedEvent
+      )}&day=${encodeURIComponent(day)}`;
+      const cached = getCachedJson<{ voters: { name: string; weight?: number }[] }>(cacheKey);
+      if (cached) {
+        setModalVoters(cached.voters);
+      } else {
+        const res = await fetch(cacheKey, { cache: "no-store" });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error(
+            payload.message || "No se pudo cargar el detalle de votos"
+          );
+        }
+        const payload: { voters: { name: string; weight?: number }[] } = await res.json();
+        setCachedJson(cacheKey, payload);
+        setModalVoters(payload.voters);
       }
-      const payload: { voters: { name: string; weight?: number }[] } = await res.json();
-      setModalVoters(payload.voters);
     } catch (error) {
       setModalError(
         error instanceof Error ? error.message : "Error al cargar el detalle"

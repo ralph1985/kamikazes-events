@@ -62,15 +62,20 @@ export default function SettingsPage() {
         setSelectedEvent(defaultEvent);
         if (defaultEvent && clientId) {
           try {
-            const resWeight = await fetch(
-              `/api/voter-weight?eventId=${encodeURIComponent(defaultEvent)}&voterId=${encodeURIComponent(clientId)}`,
-              { cache: 'no-store' }
-            );
-            if (resWeight.ok) {
-              const payload: { weight?: number } = await resWeight.json();
-              if (typeof payload.weight === 'number' && payload.weight > 0) {
-                setVoterWeight(payload.weight);
-                saveWeight(payload.weight);
+            const weightKey = `/api/voter-weight?eventId=${encodeURIComponent(defaultEvent)}&voterId=${encodeURIComponent(clientId)}`;
+            const cachedWeight = getCachedJson<{ weight?: number }>(weightKey);
+            if (cachedWeight?.weight && cachedWeight.weight > 0) {
+              setVoterWeight(cachedWeight.weight);
+              saveWeight(cachedWeight.weight);
+            } else {
+              const resWeight = await fetch(weightKey, { cache: 'no-store' });
+              if (resWeight.ok) {
+                const payload: { weight?: number } = await resWeight.json();
+                if (typeof payload.weight === 'number' && payload.weight > 0) {
+                  setVoterWeight(payload.weight);
+                  saveWeight(payload.weight);
+                  setCachedJson(weightKey, payload);
+                }
               }
             }
           } catch {
@@ -144,6 +149,7 @@ export default function SettingsPage() {
       clearCacheByPrefix('/api/results');
       clearCacheByPrefix('/api/voters');
       clearCacheByPrefix('/api/vote');
+      clearCacheByPrefix('/api/voter-weight');
       router.push('/');
     } catch (error) {
       setStatus('error');
@@ -285,16 +291,24 @@ export default function SettingsPage() {
                   setRecoveryError('');
                   setRecoverySuccess('');
                   try {
-                    const res = await fetch('/api/voters/recovery', { cache: 'no-store' });
-                    if (!res.ok) throw new Error('No se pudo cargar la lista de usuarios');
-                    const payload: { voters: { id: string; name: string }[] } = await res.json();
-                    setRecoveryList(payload.voters);
-                    setSelectedRecovery(payload.voters[0]?.id ?? '');
-                  } catch (error) {
-                    setRecoveryError(error instanceof Error ? error.message : 'Error al recuperar usuarios');
-                  } finally {
-                    setRecoveryLoading(false);
-                  }
+                const cacheKey = '/api/voters/recovery';
+                const cached = getCachedJson<{ voters: { id: string; name: string }[] }>(cacheKey);
+                if (cached) {
+                  setRecoveryList(cached.voters);
+                  setSelectedRecovery(cached.voters[0]?.id ?? '');
+                } else {
+                  const res = await fetch(cacheKey, { cache: 'no-store' });
+                  if (!res.ok) throw new Error('No se pudo cargar la lista de usuarios');
+                  const payload: { voters: { id: string; name: string }[] } = await res.json();
+                  setCachedJson(cacheKey, payload);
+                  setRecoveryList(payload.voters);
+                  setSelectedRecovery(payload.voters[0]?.id ?? '');
+                }
+              } catch (error) {
+                setRecoveryError(error instanceof Error ? error.message : 'Error al recuperar usuarios');
+              } finally {
+                setRecoveryLoading(false);
+              }
                 }}
               >
                 {recoveryLoading ? 'Cargando...' : 'Mostrar usuarios'}
@@ -330,6 +344,7 @@ export default function SettingsPage() {
                     clearCacheByPrefix('/api/results');
                     clearCacheByPrefix('/api/voters');
                     clearCacheByPrefix('/api/vote');
+                    clearCacheByPrefix('/api/voter-weight');
                     setRecoverySuccess('Usuario recuperado. Tus votos se cargarán al volver a Votar.');
                   }}
                 >
