@@ -8,6 +8,18 @@ export class KvDriver implements StorageDriver {
   async getEvents(): Promise<EventItem[]> {
     const entries = (await kv.hgetall<Record<string, string>>('events:list')) || {};
     const events: EventItem[] = Object.entries(entries).map(([id, value]) => {
+      // Caso: valor ya es un objeto (no string).
+      if (typeof value === 'object' && value !== null) {
+        const maybeEvent = value as any;
+        if (maybeEvent.window?.start && maybeEvent.window?.end) {
+          return {
+            id,
+            name: typeof maybeEvent.name === 'string' ? maybeEvent.name : String(maybeEvent.name ?? id),
+            window: maybeEvent.window,
+            closeAt: maybeEvent.closeAt ?? VOTING.closeAt
+          };
+        }
+      }
       try {
         const parsed = JSON.parse(value) as EventItem;
         if (parsed?.window?.start && parsed?.window?.end) {
@@ -37,51 +49,9 @@ export class KvDriver implements StorageDriver {
     return normalized.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }
 
-  async createEvent(
-    name: string,
-    window: EventItem['window'] = { start: '2026-01-07', end: '2026-03-01' },
-    closeAt: string | undefined = VOTING.closeAt
-  ): Promise<EventItem> {
-    const cleanName = name.trim();
-    const id = slugify(cleanName);
-    const existing = await kv.hget<string>('events:list', id);
-    let parsedExisting: EventItem | null = null;
-    if (existing && this.isSerialized(existing)) {
-      try {
-        parsedExisting = JSON.parse(existing) as EventItem;
-        // Reparar si name contiene otro JSON anidado
-        if (typeof parsedExisting?.name === 'string' && parsedExisting.name.trim().startsWith('{')) {
-          const inner = JSON.parse(parsedExisting.name);
-          if (inner?.window?.start && inner?.window?.end) {
-            parsedExisting = { ...inner, id };
-          }
-        } else if (parsedExisting?.name && typeof (parsedExisting as any).name === 'object') {
-          const inner = (parsedExisting as any).name;
-          if (inner?.window?.start && inner?.window?.end) {
-            parsedExisting = { ...inner, id };
-          }
-        }
-      } catch {
-        parsedExisting = null;
-      }
-    }
-
-    // Si ya existe, devolvemos la versión saneada pero no reescribimos para evitar corromper datos.
-    if (parsedExisting) {
-      return {
-        id,
-        name: typeof parsedExisting.name === 'string' ? parsedExisting.name : cleanName,
-        window: parsedExisting.window ?? window,
-        closeAt: parsedExisting.closeAt ?? closeAt
-      };
-    }
-    if (existing) {
-      return { id, name: existing, window, closeAt: closeAt ?? VOTING.closeAt };
-    }
-
-    const event: EventItem = { id, name: cleanName, window, closeAt: closeAt ?? VOTING.closeAt };
-    await kv.hset('events:list', { [id]: JSON.stringify(event) });
-    return event;
+  // Crear eventos en KV queda deshabilitado desde la app para evitar corrupción accidental.
+  async createEvent(): Promise<EventItem> {
+    throw new Error('Creación de eventos deshabilitada en KV; gestiona los eventos directamente en Upstash.');
   }
 
   async getResults(eventId: string): Promise<VoteResult[]> {

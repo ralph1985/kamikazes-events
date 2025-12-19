@@ -30,14 +30,6 @@ export function getDriver(): Promise<StorageDriver> {
 
 export async function ensureDefaultEvent(): Promise<StorageDriver> {
   const driver = await getDriver();
-  const events = await driver.getEvents();
-  const existing = events.find((event) => event.id === DEFAULT_EVENT.id);
-  if (!existing) {
-    await driver.createEvent(
-      DEFAULT_EVENT.name,
-      DEFAULT_EVENT.window,
-      DEFAULT_EVENT.closeAt
-    );
-  }
+  // Ya no se crean/actualizan eventos desde la app; se asume que están en el almacén.
   return driver;
 }
