@@ -32,9 +32,6 @@ export async function ensureDefaultEvent(): Promise<StorageDriver> {
   const existing = events.find((event) => event.id === DEFAULT_EVENT.id);
   if (!existing) {
     await driver.createEvent(DEFAULT_EVENT.name, DEFAULT_EVENT.window, DEFAULT_EVENT.closeAt);
-  } else if (!existing.window?.start || !existing.window?.end || !existing.closeAt) {
-    // ensure window is present if legacy data exists
-    await driver.createEvent(DEFAULT_EVENT.name, DEFAULT_EVENT.window, DEFAULT_EVENT.closeAt);
   }
   return driver;
 }

@@ -94,18 +94,20 @@ export class KvDriver implements StorageDriver {
       }
     }
 
-    const event: EventItem =
-      parsedExisting
-        ? {
-            id,
-            name: typeof parsedExisting.name === 'string' ? parsedExisting.name : cleanName,
-            window: parsedExisting.window ?? window,
-            closeAt: parsedExisting.closeAt ?? closeAt
-          }
-        : existing
-          ? { id, name: existing, window, closeAt: closeAt ?? VOTING.closeAt }
-          : { id, name: cleanName, window, closeAt: closeAt ?? VOTING.closeAt };
+    // Si ya existe, devolvemos la versión saneada pero no reescribimos para evitar corromper datos.
+    if (parsedExisting) {
+      return {
+        id,
+        name: typeof parsedExisting.name === 'string' ? parsedExisting.name : cleanName,
+        window: parsedExisting.window ?? window,
+        closeAt: parsedExisting.closeAt ?? closeAt
+      };
+    }
+    if (existing) {
+      return { id, name: existing, window, closeAt: closeAt ?? VOTING.closeAt };
+    }
 
+    const event: EventItem = { id, name: cleanName, window, closeAt: closeAt ?? VOTING.closeAt };
     await kv.hset('events:list', { [id]: JSON.stringify(event) });
     return event;
   }
