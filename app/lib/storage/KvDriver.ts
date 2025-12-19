@@ -8,13 +8,43 @@ export class KvDriver implements StorageDriver {
   async getEvents(): Promise<EventItem[]> {
     const entries = (await kv.hgetall<Record<string, string>>('events:list')) || {};
     const events: EventItem[] = Object.entries(entries).map(([id, value]) => {
+      const sanitize = (eventLike: any): EventItem => {
+        // Si name es un JSON stringificado, intentar parsearlo.
+        let base = eventLike;
+        if (typeof base?.name === 'string' && base.name.trim().startsWith('{')) {
+          try {
+            const inner = JSON.parse(base.name);
+            if (inner?.window?.start && inner?.window?.end) {
+              base = inner;
+            }
+          } catch {
+            // ignore parse
+          }
+        } else if (base?.name && typeof base.name === 'object' && base.name.window) {
+          // Caso en que name es otro objeto evento anidado
+          base = base.name;
+        }
+
+        const window = base?.window ?? { start: '2026-01-07', end: '2026-03-01' };
+        const closeAt = base?.closeAt ?? VOTING.closeAt;
+        const cleanName =
+          typeof base?.name === 'string'
+            ? base.name
+            : typeof base?.name?.name === 'string'
+              ? base.name.name
+              : String(base?.name ?? id);
+        return {
+          id,
+          name: cleanName,
+          window,
+          closeAt
+        };
+      };
+
       try {
         const parsed = JSON.parse(value) as EventItem;
         if (parsed?.window?.start && parsed?.window?.end) {
-          return {
-            ...parsed,
-            closeAt: parsed.closeAt ?? VOTING.closeAt
-          };
+          return sanitize(parsed);
         }
       } catch {
         // ignore parse error
@@ -47,6 +77,18 @@ export class KvDriver implements StorageDriver {
     if (existing && this.isSerialized(existing)) {
       try {
         parsedExisting = JSON.parse(existing) as EventItem;
+        // Reparar si name contiene otro JSON anidado
+        if (typeof parsedExisting?.name === 'string' && parsedExisting.name.trim().startsWith('{')) {
+          const inner = JSON.parse(parsedExisting.name);
+          if (inner?.window?.start && inner?.window?.end) {
+            parsedExisting = { ...inner, id };
+          }
+        } else if (parsedExisting?.name && typeof (parsedExisting as any).name === 'object') {
+          const inner = (parsedExisting as any).name;
+          if (inner?.window?.start && inner?.window?.end) {
+            parsedExisting = { ...inner, id };
+          }
+        }
       } catch {
         parsedExisting = null;
       }
