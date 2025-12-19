@@ -43,9 +43,23 @@ export class KvDriver implements StorageDriver {
     const cleanName = name.trim();
     const id = slugify(cleanName);
     const existing = await kv.hget<string>('events:list', id);
+    let parsedExisting: EventItem | null = null;
+    if (existing && this.isSerialized(existing)) {
+      try {
+        parsedExisting = JSON.parse(existing) as EventItem;
+      } catch {
+        parsedExisting = null;
+      }
+    }
+
     const event: EventItem =
-      existing && this.isSerialized(existing)
-        ? ({ ...(JSON.parse(existing) as EventItem), closeAt: closeAt ?? VOTING.closeAt } as EventItem)
+      parsedExisting
+        ? {
+            id,
+            name: typeof parsedExisting.name === 'string' ? parsedExisting.name : cleanName,
+            window: parsedExisting.window ?? window,
+            closeAt: parsedExisting.closeAt ?? closeAt
+          }
         : existing
           ? { id, name: existing, window, closeAt: closeAt ?? VOTING.closeAt }
           : { id, name: cleanName, window, closeAt: closeAt ?? VOTING.closeAt };
