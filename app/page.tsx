@@ -304,6 +304,11 @@ export default function Page() {
       />
 
       <section className="space-y-3">
+        {!votingClosed && closeLabel && (
+          <p className="text-amber-200 text-sm">
+            Las votaciones se cerrarán el {closeLabel}.
+          </p>
+        )}
         {voteState === "success" && (
           <p className="text-emerald-300 text-sm">
             ¡Voto registrado! Añade o quita días tocando en el calendario; la
