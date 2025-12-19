@@ -5,6 +5,7 @@ export type EventItem = {
     start: string; // YYYY-MM-DD
     end: string; // YYYY-MM-DD
   };
+  closeAt?: string; // ISO string con fecha/hora de cierre por evento
 };
 
 export type VoteResult = {
@@ -25,7 +26,7 @@ export type VoterInfo = {
 
 export interface StorageDriver {
   getEvents(): Promise<EventItem[]>;
-  createEvent(name: string, window?: EventItem['window']): Promise<EventItem>;
+  createEvent(name: string, window?: EventItem['window'], closeAt?: string): Promise<EventItem>;
   getResults(eventId: string): Promise<VoteResult[]>;
   vote(eventId: string, voterId: string, name: string, days: string[]): Promise<void>;
   getSelection(eventId: string, voterId: string): Promise<string[]>;

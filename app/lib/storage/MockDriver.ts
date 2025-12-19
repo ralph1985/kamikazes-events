@@ -11,7 +11,8 @@ const defaultEvent: EventItem = {
   window: {
     start: '2026-01-07',
     end: '2026-03-01'
-  }
+  },
+  closeAt: undefined
 };
 
 export class MockDriver implements StorageDriver {
@@ -21,6 +22,7 @@ export class MockDriver implements StorageDriver {
   private voterNames: Map<string, string>;
   private voterWeights: Map<string, number>;
   private windows: Map<string, { start: string; end: string }>;
+  private closeAt: Map<string, string>;
 
   constructor() {
     const initialEvents: EventItem[] = [
@@ -28,12 +30,14 @@ export class MockDriver implements StorageDriver {
       {
         id: slugify('evento de prueba 1'),
         name: 'evento de prueba 1',
-        window: { start: '2026-01-07', end: '2026-02-01' }
+        window: { start: '2026-01-07', end: '2026-02-01' },
+        closeAt: undefined
       },
       {
         id: slugify('evento de prueba 2'),
         name: 'evento de prueba 2',
-        window: { start: '2026-02-02', end: '2026-03-01' }
+        window: { start: '2026-02-02', end: '2026-03-01' },
+        closeAt: undefined
       }
     ];
     this.events = new Map(initialEvents.map((event) => [event.id, event.name]));
@@ -42,6 +46,7 @@ export class MockDriver implements StorageDriver {
     this.voterNames = new Map();
     this.voterWeights = new Map();
     this.windows = new Map(initialEvents.map((event) => [event.id, event.window]));
+    this.closeAt = new Map(initialEvents.map((event) => [event.id, event.closeAt ?? '2026-12-21T11:00:00Z']));
     this.seedVotes();
   }
 
@@ -56,14 +61,16 @@ export class MockDriver implements StorageDriver {
       .map(([id, name]) => ({
         id,
         name: typeof name === 'string' ? name : String(name),
-        window: this.windows.get(id) ?? { start: '2026-01-07', end: '2026-03-01' }
+        window: this.windows.get(id) ?? { start: '2026-01-07', end: '2026-03-01' },
+        closeAt: this.closeAt.get(id) ?? '2026-12-21T11:00:00Z'
       }))
       .sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }
 
   async createEvent(
     name: string,
-    window: EventItem['window'] = { start: '2026-01-07', end: '2026-03-01' }
+    window: EventItem['window'] = { start: '2026-01-07', end: '2026-03-01' },
+    closeAt: string = '2026-12-21T11:00:00Z'
   ): Promise<EventItem> {
     const cleanName = name.trim();
     const id = slugify(cleanName);
@@ -73,7 +80,15 @@ export class MockDriver implements StorageDriver {
     if (!this.windows.has(id)) {
       this.windows.set(id, window);
     }
-    return { id, name: this.events.get(id) ?? cleanName, window: this.windows.get(id) ?? window };
+    if (!this.closeAt.has(id)) {
+      this.closeAt.set(id, closeAt);
+    }
+    return {
+      id,
+      name: this.events.get(id) ?? cleanName,
+      window: this.windows.get(id) ?? window,
+      closeAt: this.closeAt.get(id) ?? closeAt
+    };
   }
 
   async getResults(eventId: string): Promise<VoteResult[]> {

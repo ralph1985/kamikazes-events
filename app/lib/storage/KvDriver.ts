@@ -2,6 +2,7 @@ import { kv } from '@vercel/kv';
 import { formatDayKey, parseDayKey } from '../dates';
 import { slugify } from '../slug';
 import type { EventItem, StorageDriver, VoteResult, VoterInfo } from './StorageDriver';
+import { VOTING } from '../constants';
 
 export class KvDriver implements StorageDriver {
   async getEvents(): Promise<EventItem[]> {
@@ -9,7 +10,12 @@ export class KvDriver implements StorageDriver {
     const events: EventItem[] = Object.entries(entries).map(([id, value]) => {
       try {
         const parsed = JSON.parse(value) as EventItem;
-        if (parsed?.window?.start && parsed?.window?.end) return parsed;
+        if (parsed?.window?.start && parsed?.window?.end) {
+          return {
+            ...parsed,
+            closeAt: parsed.closeAt ?? VOTING.closeAt
+          };
+        }
       } catch {
         // ignore parse error
       }
@@ -17,29 +23,32 @@ export class KvDriver implements StorageDriver {
       return {
         id,
         name: safeName,
-        window: { start: '2026-01-07', end: '2026-03-01' }
+        window: { start: '2026-01-07', end: '2026-03-01' },
+        closeAt: VOTING.closeAt
       };
     });
     const normalized = events.map((event) => ({
       ...event,
-      name: typeof event.name === 'string' ? event.name : String(event.id)
+      name: typeof event.name === 'string' ? event.name : String(event.id),
+      closeAt: event.closeAt ?? VOTING.closeAt
     }));
     return normalized.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }
 
   async createEvent(
     name: string,
-    window: EventItem['window'] = { start: '2026-01-07', end: '2026-03-01' }
+    window: EventItem['window'] = { start: '2026-01-07', end: '2026-03-01' },
+    closeAt: string | undefined = VOTING.closeAt
   ): Promise<EventItem> {
     const cleanName = name.trim();
     const id = slugify(cleanName);
     const existing = await kv.hget<string>('events:list', id);
     const event: EventItem =
       existing && this.isSerialized(existing)
-        ? (JSON.parse(existing) as EventItem)
+        ? ({ ...(JSON.parse(existing) as EventItem), closeAt: closeAt ?? VOTING.closeAt } as EventItem)
         : existing
-          ? { id, name: existing, window }
-          : { id, name: cleanName, window };
+          ? { id, name: existing, window, closeAt: closeAt ?? VOTING.closeAt }
+          : { id, name: cleanName, window, closeAt: closeAt ?? VOTING.closeAt };
 
     await kv.hset('events:list', { [id]: JSON.stringify(event) });
     return event;

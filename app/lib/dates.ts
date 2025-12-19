@@ -61,3 +61,9 @@ export function minDate(event: { window: { start: string } }): Date {
 export function maxDate(event: { window: { end: string } }): Date {
   return parseDayKey(event.window.end);
 }
+
+export function isVotingClosed(closeAt: string | undefined = VOTING.closeAt, now: Date = new Date()): boolean {
+  if (!closeAt) return false;
+  const close = parseISO(closeAt ?? VOTING.closeAt);
+  return isAfter(now, close);
+}

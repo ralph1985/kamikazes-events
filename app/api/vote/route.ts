@@ -1,4 +1,4 @@
-import { allowedDayKeys, formatDayKey, isWithinVoteWindow, parseDayKey } from '../../lib/dates';
+import { allowedDayKeys, formatDayKey, isVotingClosed, isWithinVoteWindow, parseDayKey } from '../../lib/dates';
 import { ensureDefaultEvent } from '../../lib/storage';
 import { jsonNoStore } from '../../lib/api';
 
@@ -34,6 +34,9 @@ export async function POST(request: Request) {
     const event = events.find((item) => item.id === eventId);
     if (!event) {
       return jsonNoStore({ message: 'El evento no existe' }, { status: 400 });
+    }
+    if (isVotingClosed(event?.closeAt)) {
+      return jsonNoStore({ message: 'Las votaciones están cerradas' }, { status: 400 });
     }
 
     let normalizedDays: string[];

@@ -15,6 +15,7 @@ type Props = {
   dayVotes?: Record<string, number>;
   loadingDayKey?: string | null;
   allowedDayKeys?: string[];
+  disabled?: boolean;
 };
 
 export function Calendar({
@@ -25,7 +26,8 @@ export function Calendar({
   windowLabel,
   dayVotes,
   loadingDayKey,
-  allowedDayKeys = []
+  allowedDayKeys = [],
+  disabled = false
 }: Props) {
   const allowedSet = useMemo(() => new Set(allowedDayKeys), [allowedDayKeys]);
 
@@ -59,14 +61,14 @@ export function Calendar({
   }, [fromDate, toDate]);
 
   const toggleDate = (day: Date) => {
-    if (isDisabled(day)) return;
+    if (disabled || isDisabled(day)) return;
     onSelect(day);
   };
 
   const isDisabled = (day: Date) => {
     const key = formatDayKey(day);
     const outOfRange = isBefore(day, fromDate) || isAfter(day, toDate);
-    if (outOfRange) return true;
+    if (outOfRange || disabled) return true;
     if (allowedSet.size > 0) {
       return !allowedSet.has(key);
     }

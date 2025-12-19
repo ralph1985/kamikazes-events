@@ -25,13 +25,14 @@ export async function POST(request: Request) {
       typeof body.window.end === 'string'
         ? { start: body.window.start, end: body.window.end }
         : undefined;
+    const closeAt = typeof body?.closeAt === 'string' ? body.closeAt : undefined;
 
     if (!name) {
       return jsonNoStore({ message: 'El nombre del evento es obligatorio' }, { status: 400 });
     }
 
     const driver = await ensureDefaultEvent();
-    const event = await driver.createEvent(name, window);
+    const event = await driver.createEvent(name, window, closeAt);
     return jsonNoStore(event);
   } catch (error) {
     console.error('POST /api/events', error);

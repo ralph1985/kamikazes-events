@@ -2,7 +2,7 @@
  * Configuración común para la app.
  * - CACHE_*: controlan prefijos y expiraciones de la caché en sessionStorage.
  * - STORAGE_KEYS: claves de localStorage para datos del cliente.
- * - VOTING: configuración provisional de días habilitados (TODO: mover a cada evento).
+ * - VOTING: configuración provisional de días habilitados y cierre por defecto opcional (TODO: mover a cada evento).
  */
 
 // Prefijo para las entradas de caché en sessionStorage.
@@ -25,5 +25,7 @@ export const STORAGE_KEYS = {
  * TODO: mover los días permitidos a la definición de cada evento en la API y eliminar esta constante global.
  */
 export const VOTING = {
-  allowedDayKeys: ['2026-01-17', '2026-02-07', '2026-02-08', '2026-02-21', '2026-02-22', '2026-02-28']
+  allowedDayKeys: ['2026-01-17', '2026-02-07', '2026-02-08', '2026-02-21', '2026-02-22', '2026-02-28'],
+  // Fecha/hora límite por defecto (si se omite, no hay cierre). Puede ser sobrescrita por cada evento.
+  closeAt: undefined as string | undefined
 } as const;

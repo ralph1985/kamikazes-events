@@ -6,6 +6,7 @@ import { Calendar } from "./components/Calendar";
 import {
   allowedDaysWithinWindow,
   formatDayKey,
+  isVotingClosed,
   isWithinVoteWindow,
   parseDayKey,
 } from "./lib/dates";
@@ -46,6 +47,10 @@ export default function Page() {
   const selectedEventData = useMemo(
     () => events.find((event) => event.id === selectedEvent),
     [events, selectedEvent]
+  );
+  const votingClosed = useMemo(
+    () => isVotingClosed(selectedEventData?.closeAt),
+    [selectedEventData?.closeAt]
   );
   const allowedDayKeysForEvent = useMemo(
     () =>
@@ -170,6 +175,10 @@ export default function Page() {
   const handleVote = async (day: Date) => {
     if (!selectedEvent || !voterName.trim() || !clientId || !selectedEventData)
       return;
+    if (votingClosed) {
+      setErrorMessage("Las votaciones están cerradas.");
+      return;
+    }
     const dayKey = formatDayKey(day);
     if (
       !isWithinVoteWindow(
@@ -270,6 +279,7 @@ export default function Page() {
         allowedDayKeys={allowedDayKeysForEvent}
         dayVotes={votesByDay}
         loadingDayKey={votingDayKey}
+        disabled={votingClosed}
         windowLabel={
           selectedEventData
             ? `Días habilitados: ${allowedDayKeysForEvent.length}`
@@ -282,6 +292,11 @@ export default function Page() {
           <p className="text-emerald-300 text-sm">
             ¡Voto registrado! Añade o quita días tocando en el calendario; la
             selección se actualiza al momento.
+          </p>
+        )}
+        {votingClosed && (
+          <p className="text-amber-300 text-sm">
+            Las votaciones están cerradas desde el 21/12/2026 a las 12:00.
           </p>
         )}
         {voteState === "error" && (
