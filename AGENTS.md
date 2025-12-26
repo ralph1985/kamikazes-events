@@ -27,3 +27,10 @@
 ## Commit & Pull Request Guidelines
 - Commits follow a light Conventional Commits style seen in history (`feat: ...`, `style: ...`); keep scopes and summaries short and imperative.
 - For PRs, include a brief summary, linked issue (if any), screenshots for UI changes, and the commands you ran (lint/typecheck). Note any new env vars or migration steps.
+
+## Gestión de tareas y horas
+- Al empezar, identifica el proyecto y usa ese nombre en `project`.
+- Busca si ya existe una tarea "En curso" para ese trabajo; si existe, registra horas y notas ahí.
+- Si no existe, crea una nueva con `npm run task:add` en el monorepo (o edita a mano manteniendo `dd/mm/aaaa`, id incremental y mínimos: `status`, `startDate`, `hours`, `project`).
+- Registra siempre la actividad en `data/projects-tasks.json` del monorepo (estado, fechas, horas, notas, proyecto).
+- Proyecto de referencia para este repo: `kamikazes-events`.
