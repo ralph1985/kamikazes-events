@@ -34,7 +34,7 @@
 
 ## Commit & Pull Request Guidelines
 
-- Commits follow a light Conventional Commits style seen in history (`feat: ...`, `style: ...`); keep scopes and summaries short and imperative.
+- Commits follow a light Conventional Commits style seen in history (`feat: ...`, `style: ...`); keep scopes and summaries short and imperative, and write commit messages in English.
 - For PRs, include a brief summary, linked issue (if any), screenshots for UI changes, and the commands you ran (lint/typecheck). Note any new env vars or migration steps.
 
 ## Gestión de tareas y horas
