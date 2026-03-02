@@ -17,7 +17,8 @@ export const STORAGE_KEYS = {
   selectedEventId: 'selectedEventId',
   voterName: 'voterName',
   clientId: 'clientId',
-  voterWeight: 'voterWeight'
+  voterWeight: 'voterWeight',
+  storageReset20260301Done: 'storageReset20260301Done'
 } as const;
 
 /**

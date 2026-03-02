@@ -11,6 +11,7 @@ import {
   getStoredEvent,
   getStoredName,
   getStoredWeight,
+  runStorageResetMigration,
   saveEvent,
   saveName,
   saveWeight,
@@ -40,6 +41,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    runStorageResetMigration();
     setClientId(getClientId());
     setVoterName(getStoredName());
     setVoterWeight(getStoredWeight());

@@ -9,6 +9,7 @@ import {
   getClientId,
   getStoredEvent,
   getStoredName,
+  runStorageResetMigration,
   saveEvent,
 } from "../lib/client";
 import type {
@@ -86,6 +87,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    runStorageResetMigration();
     setClientId(getClientId());
     const storedName = getStoredName();
     setVoterName(storedName);

@@ -4,6 +4,8 @@ const CLIENT_ID_KEY = STORAGE_KEYS.clientId;
 const VOTER_NAME_KEY = STORAGE_KEYS.voterName;
 const SELECTED_EVENT_KEY = STORAGE_KEYS.selectedEventId;
 const VOTER_WEIGHT_KEY = STORAGE_KEYS.voterWeight;
+const STORAGE_RESET_20260301_DONE_KEY = STORAGE_KEYS.storageReset20260301Done;
+const STORAGE_RESET_20260301_AT = Date.parse('2026-03-01T00:00:00Z');
 
 function randomId(): string {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 10);
@@ -62,6 +64,18 @@ export function clearClientData() {
   localStorage.removeItem(VOTER_NAME_KEY);
   localStorage.removeItem(SELECTED_EVENT_KEY);
   localStorage.removeItem(VOTER_WEIGHT_KEY);
+}
+
+export function runStorageResetMigration(now: Date = new Date()) {
+  if (typeof window === 'undefined') return false;
+  if (now.getTime() < STORAGE_RESET_20260301_AT) return false;
+  const alreadyDone = localStorage.getItem(STORAGE_RESET_20260301_DONE_KEY) === '1';
+  if (alreadyDone) return false;
+
+  clearClientData();
+  window.sessionStorage.clear();
+  localStorage.setItem(STORAGE_RESET_20260301_DONE_KEY, '1');
+  return true;
 }
 
 export const localStorageKeys = {
