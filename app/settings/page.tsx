@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { EventSelect } from '../components/EventSelect';
 import { DescriptionCard } from '../components/DescriptionCard';
 import { HeaderBar } from '../components/HeaderBar';
@@ -36,6 +36,7 @@ export default function SettingsPage() {
   const [recoveryList, setRecoveryList] = useState<{ id: string; name: string }[]>([]);
   const [selectedRecovery, setSelectedRecovery] = useState<string>('');
   const [recoverySuccess, setRecoverySuccess] = useState<string>('');
+  const activeEvents = useMemo(() => events.filter((event) => !event.completed), [events]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -56,11 +57,15 @@ export default function SettingsPage() {
         );
         setEvents(data);
         const stored = typeof window !== 'undefined' ? getStoredEvent() : null;
-        const defaultEvent = stored && data.some((e) => e.id === stored) ? stored : data[0]?.id ?? '';
-        setSelectedEvent(defaultEvent);
-        if (defaultEvent && clientId) {
+        const eligibleEvents = data.filter((event) => !event.completed);
+        const activeDefaultEvent =
+          stored && eligibleEvents.some((event) => event.id === stored)
+            ? stored
+            : eligibleEvents[0]?.id ?? '';
+        setSelectedEvent(activeDefaultEvent);
+        if (activeDefaultEvent && clientId) {
           try {
-            const weightKey = `/api/voter-weight?eventId=${encodeURIComponent(defaultEvent)}&voterId=${encodeURIComponent(clientId)}`;
+            const weightKey = `/api/voter-weight?eventId=${encodeURIComponent(activeDefaultEvent)}&voterId=${encodeURIComponent(clientId)}`;
             const payload = await fetchJsonWithCache<{ weight?: number }>(weightKey);
             if (typeof payload.weight === 'number' && payload.weight > 0) {
               setVoterWeight(payload.weight);
@@ -89,7 +94,7 @@ export default function SettingsPage() {
       return;
     }
     if (!selectedEvent) {
-      setErrorMessage('Selecciona un evento');
+      setErrorMessage('No hay eventos activos para seleccionar');
       return;
     }
     if (!Number.isFinite(voterWeight) || voterWeight <= 0) {
@@ -184,11 +189,14 @@ export default function SettingsPage() {
           </div>
 
           <EventSelect
-            events={events}
+            events={activeEvents}
             value={selectedEvent}
             onChange={setSelectedEvent}
             disabled={eventsLoading}
           />
+          {activeEvents.length === 0 && (
+            <p className="text-amber-300 text-sm">No hay eventos activos disponibles.</p>
+          )}
 
           <button
             type="submit"
@@ -245,7 +253,8 @@ export default function SettingsPage() {
                 clearCacheByPrefix('/api/vote');
                 clearClientData();
                 setVoterName('');
-                setSelectedEvent(data[0]?.id ?? '');
+                const firstActive = data.find((event) => !event.completed)?.id ?? '';
+                setSelectedEvent(firstActive);
                 setResetStatus('done');
               } catch (error) {
                 setResetStatus('error');

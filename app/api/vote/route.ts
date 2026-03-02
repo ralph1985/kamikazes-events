@@ -1,4 +1,4 @@
-import { allowedDayKeys, formatDayKey, isVotingClosed, isWithinVoteWindow, parseDayKey } from '../../lib/dates';
+import { formatDayKey, isVotingClosed, isWithinVoteWindow, parseDayKey } from '../../lib/dates';
 import { ensureDefaultEvent } from '../../lib/storage';
 import { jsonNoStore } from '../../lib/api';
 
@@ -35,6 +35,9 @@ export async function POST(request: Request) {
     if (!event) {
       return jsonNoStore({ message: 'El evento no existe' }, { status: 400 });
     }
+    if (event.completed) {
+      return jsonNoStore({ message: 'Este evento está completado y no admite más votos' }, { status: 400 });
+    }
     if (isVotingClosed(event?.closeAt)) {
       return jsonNoStore({ message: 'Las votaciones están cerradas' }, { status: 400 });
     }
@@ -47,7 +50,14 @@ export async function POST(request: Request) {
           : Array.from(
               new Set(
                 days.map((day) => {
-                  if (!isWithinVoteWindow(day, event.window.start, event.window.end))
+                  if (
+                    !isWithinVoteWindow(
+                      day,
+                      event.window.start,
+                      event.window.end,
+                      event.blockedDays ?? []
+                    )
+                  )
                     throw new Error('Fuera de rango');
                   return formatDayKey(parseDayKey(day));
                 })
@@ -56,7 +66,7 @@ export async function POST(request: Request) {
     } catch {
       return jsonNoStore(
         {
-          message: `El día no es válido o está fuera de rango (${allowedDayKeys.join(', ')})`
+          message: 'El día no es válido, no cae en fin de semana o está bloqueado para este evento'
         },
         { status: 400 }
       );
@@ -85,10 +95,15 @@ export async function GET(request: Request) {
     if (!event) {
       return jsonNoStore({ message: 'El evento no existe' }, { status: 400 });
     }
+    if (event.completed) {
+      return jsonNoStore({ days: [] });
+    }
 
     const selection = await driver.getSelection(eventId, voterId);
     const normalized = selection
-      .filter((day) => isWithinVoteWindow(day, event.window.start, event.window.end))
+      .filter((day) =>
+        isWithinVoteWindow(day, event.window.start, event.window.end, event.blockedDays ?? [])
+      )
       .map((day) => formatDayKey(parseDayKey(day)));
 
     return jsonNoStore({ days: normalized });

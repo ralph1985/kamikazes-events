@@ -21,11 +21,10 @@ export const STORAGE_KEYS = {
 } as const;
 
 /**
- * Configuración de votación.
- * TODO: mover los días permitidos a la definición de cada evento en la API y eliminar esta constante global.
+ * Configuración de votación global por defecto.
+ * Las reglas de días votables viven en cada evento (window + blockedDays).
  */
 export const VOTING = {
-  allowedDayKeys: ['2026-01-17', '2026-02-07', '2026-02-08', '2026-02-21', '2026-02-22', '2026-02-28'],
   // Fecha/hora límite por defecto (si se omite, no hay cierre). Puede ser sobrescrita por cada evento.
   closeAt: undefined as string | undefined
 } as const;

@@ -33,14 +33,19 @@ export default function ResultsPage() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [clientId, setClientId] = useState<string>("");
   const [voterName, setVoterName] = useState<string>("");
+  const activeEvents = useMemo(
+    () => events.filter((event) => !event.completed),
+    [events]
+  );
   const selectedEventData = events.find((e) => e.id === selectedEvent);
   const allowedDayKeysForEvent = useMemo(
     () =>
       allowedDaysWithinWindow(
         selectedEventData?.window.start ?? "",
-        selectedEventData?.window.end ?? ""
+        selectedEventData?.window.end ?? "",
+        selectedEventData?.blockedDays ?? []
       ),
-    [selectedEventData?.window.end, selectedEventData?.window.start]
+    [selectedEventData?.blockedDays, selectedEventData?.window.end, selectedEventData?.window.start]
   );
   const [modalDay, setModalDay] = useState<string | null>(null);
   const [modalVoters, setModalVoters] = useState<
@@ -100,11 +105,12 @@ export default function ResultsPage() {
         setEvents(eventsData);
         const storedEventId =
           typeof window !== "undefined" ? getStoredEvent() : null;
+        const eligibleEvents = eventsData.filter((event) => !event.completed);
         const defaultEventId =
           storedEventId &&
-          eventsData.some((event) => event.id === storedEventId)
+          eligibleEvents.some((event) => event.id === storedEventId)
             ? storedEventId
-            : eventsData[0]?.id ?? "";
+            : eligibleEvents[0]?.id ?? "";
         setSelectedEvent(defaultEventId);
       } catch (error) {
         setErrorMessage(
@@ -202,11 +208,14 @@ export default function ResultsPage() {
 
       <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 space-y-4 shadow-lg">
         <EventSelect
-          events={events}
+          events={activeEvents}
           value={selectedEvent}
           onChange={setSelectedEvent}
           disabled={eventsLoading}
         />
+        {activeEvents.length === 0 && (
+          <p className="text-amber-300 text-sm">No hay eventos activos disponibles.</p>
+        )}
         <div className="flex flex-wrap gap-2 text-xs text-slate-400">
           <span className="tag">
             Ventana:{" "}

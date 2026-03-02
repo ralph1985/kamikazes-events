@@ -15,7 +15,9 @@ export class KvDriver implements StorageDriver {
           return {
             id,
             name: typeof maybeEvent.name === 'string' ? maybeEvent.name : String(maybeEvent.name ?? id),
+            completed: Boolean(maybeEvent.completed),
             window: maybeEvent.window,
+            blockedDays: this.normalizeBlockedDays(maybeEvent.blockedDays),
             closeAt: maybeEvent.closeAt ?? VOTING.closeAt
           };
         }
@@ -26,7 +28,9 @@ export class KvDriver implements StorageDriver {
           return {
             id,
             name: typeof parsed.name === 'string' ? parsed.name : String(parsed.name ?? id),
+            completed: Boolean((parsed as any).completed),
             window: parsed.window,
+            blockedDays: this.normalizeBlockedDays((parsed as any).blockedDays),
             closeAt: parsed.closeAt ?? VOTING.closeAt
           };
         }
@@ -37,13 +41,17 @@ export class KvDriver implements StorageDriver {
       return {
         id,
         name: safeName,
+        completed: false,
         window: { start: '2026-01-07', end: '2026-03-01' },
+        blockedDays: [],
         closeAt: VOTING.closeAt
       };
     });
     const normalized = events.map((event) => ({
       ...event,
       name: typeof event.name === 'string' ? event.name : String(event.id),
+      completed: Boolean(event.completed),
+      blockedDays: this.normalizeBlockedDays(event.blockedDays),
       closeAt: event.closeAt ?? VOTING.closeAt
     }));
     return normalized.sort((a, b) => a.name.localeCompare(b.name, 'es'));
@@ -207,5 +215,10 @@ export class KvDriver implements StorageDriver {
     } catch {
       return false;
     }
+  }
+
+  private normalizeBlockedDays(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
   }
 }

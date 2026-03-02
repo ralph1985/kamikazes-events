@@ -8,10 +8,12 @@ type Counts = Map<string, number>;
 const defaultEvent: EventItem = {
   id: 'babyshower-mullor-gallego-v2',
   name: 'Babyshower Mullor-Gallego V2',
+  completed: false,
   window: {
     start: '2026-01-07',
     end: '2026-03-01'
   },
+  blockedDays: [],
   closeAt: undefined
 };
 
@@ -22,6 +24,7 @@ export class MockDriver implements StorageDriver {
   private voterNames: Map<string, string>;
   private voterWeights: Map<string, number>;
   private windows: Map<string, { start: string; end: string }>;
+  private blockedDays: Map<string, string[]>;
   private closeAt: Map<string, string>;
 
   constructor() {
@@ -30,13 +33,17 @@ export class MockDriver implements StorageDriver {
       {
         id: slugify('evento de prueba 1'),
         name: 'evento de prueba 1',
+        completed: false,
         window: { start: '2026-01-07', end: '2026-02-01' },
+        blockedDays: [],
         closeAt: undefined
       },
       {
         id: slugify('evento de prueba 2'),
         name: 'evento de prueba 2',
+        completed: false,
         window: { start: '2026-02-02', end: '2026-03-01' },
+        blockedDays: [],
         closeAt: undefined
       }
     ];
@@ -46,6 +53,7 @@ export class MockDriver implements StorageDriver {
     this.voterNames = new Map();
     this.voterWeights = new Map();
     this.windows = new Map(initialEvents.map((event) => [event.id, event.window]));
+    this.blockedDays = new Map(initialEvents.map((event) => [event.id, event.blockedDays ?? []]));
     this.closeAt = new Map(initialEvents.map((event) => [event.id, event.closeAt ?? '2026-12-21T11:00:00Z']));
     this.seedVotes();
   }
@@ -61,7 +69,9 @@ export class MockDriver implements StorageDriver {
       .map(([id, name]) => ({
         id,
         name: typeof name === 'string' ? name : String(name),
+        completed: false,
         window: this.windows.get(id) ?? { start: '2026-01-07', end: '2026-03-01' },
+        blockedDays: this.blockedDays.get(id) ?? [],
         closeAt: this.closeAt.get(id) ?? '2026-12-21T11:00:00Z'
       }))
       .sort((a, b) => a.name.localeCompare(b.name, 'es'));
@@ -83,10 +93,15 @@ export class MockDriver implements StorageDriver {
     if (!this.closeAt.has(id)) {
       this.closeAt.set(id, closeAt);
     }
+    if (!this.blockedDays.has(id)) {
+      this.blockedDays.set(id, []);
+    }
     return {
       id,
       name: this.events.get(id) ?? cleanName,
+      completed: false,
       window: this.windows.get(id) ?? window,
+      blockedDays: this.blockedDays.get(id) ?? [],
       closeAt: this.closeAt.get(id) ?? closeAt
     };
   }

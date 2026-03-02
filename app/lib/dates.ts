@@ -1,4 +1,4 @@
-import { addDays, format, isAfter, isBefore, isValid, parseISO, startOfDay, isSameDay } from 'date-fns';
+import { addDays, format, getDay, isAfter, isBefore, isValid, parseISO, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { VOTING } from './constants';
 
@@ -18,35 +18,54 @@ export function isValidDayKey(value: string): boolean {
   return isValid(parsed);
 }
 
-export const allowedDayKeys = VOTING.allowedDayKeys as readonly string[];
-
 export function formatDisplay(dayKey: string): string {
   return format(parseDayKey(dayKey), 'EEE dd/MM/yyyy', { locale: es });
 }
 
-export function isAllowedDay(dayKey: string): boolean {
-  if (!isValidDayKey(dayKey)) return false;
-  return allowedDayKeys.includes(dayKey);
-}
-
-export function allowedDaysWithinWindow(start: string, end: string): string[] {
+export function weekendDaysWithinWindow(start: string, end: string): string[] {
   const startDate = parseDayKey(start);
   const endDate = parseDayKey(end);
-  return allowedDayKeys.filter((day) => {
-    const date = parseDayKey(day);
-    return !isBefore(date, startDate) && !isAfter(date, endDate);
-  });
+  if (isAfter(startDate, endDate)) return [];
+
+  const days: string[] = [];
+  let cursor = startDate;
+  while (!isAfter(cursor, endDate)) {
+    const day = getDay(cursor);
+    if (day === 0 || day === 6) {
+      days.push(formatDayKey(cursor));
+    }
+    cursor = addDays(cursor, 1);
+  }
+  return days;
 }
 
-export function firstAllowedDay(start: string, end: string): Date {
-  const filtered = allowedDaysWithinWindow(start, end);
+export function allowedDaysWithinWindow(
+  start: string,
+  end: string,
+  blockedDays: string[] = []
+): string[] {
+  const blockedSet = new Set(
+    blockedDays
+      .filter((value) => isValidDayKey(value))
+      .map((value) => formatDayKey(parseDayKey(value)))
+  );
+  return weekendDaysWithinWindow(start, end).filter((day) => !blockedSet.has(day));
+}
+
+export function firstAllowedDay(start: string, end: string, blockedDays: string[] = []): Date {
+  const filtered = allowedDaysWithinWindow(start, end, blockedDays);
   if (filtered.length === 0) return parseDayKey(start);
   return parseDayKey(filtered[0]);
 }
 
-export function isWithinVoteWindow(dayKey: string, start: string, end: string): boolean {
+export function isWithinVoteWindow(
+  dayKey: string,
+  start: string,
+  end: string,
+  blockedDays: string[] = []
+): boolean {
   if (!isValidDayKey(dayKey)) return false;
-  const filtered = allowedDaysWithinWindow(start, end);
+  const filtered = allowedDaysWithinWindow(start, end, blockedDays);
   return filtered.includes(formatDayKey(parseDayKey(dayKey)));
 }
 

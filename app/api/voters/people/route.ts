@@ -24,7 +24,8 @@ export async function GET(request: Request) {
     const allowed = new Set(
       allowedDaysWithinWindow(
         events.find((event) => event.id === eventId)?.window.start ?? '',
-        events.find((event) => event.id === eventId)?.window.end ?? ''
+        events.find((event) => event.id === eventId)?.window.end ?? '',
+        events.find((event) => event.id === eventId)?.blockedDays ?? []
       )
     );
     const voters = (await driver.getVotersSelections(eventId)).map((voter) => ({

@@ -1,10 +1,12 @@
 export type EventItem = {
   id: string;
   name: string;
+  completed?: boolean;
   window: {
     start: string; // YYYY-MM-DD
     end: string; // YYYY-MM-DD
   };
+  blockedDays?: string[]; // YYYY-MM-DD no votables dentro (o fuera) de la ventana
   closeAt?: string; // ISO string con fecha/hora de cierre por evento
 };
 

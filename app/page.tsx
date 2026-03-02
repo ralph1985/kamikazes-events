@@ -43,10 +43,14 @@ export default function Page() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [votingDayKey, setVotingDayKey] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const activeEvents = useMemo(
+    () => events.filter((event) => !event.completed),
+    [events]
+  );
 
   const selectedEventData = useMemo(
-    () => events.find((event) => event.id === selectedEvent),
-    [events, selectedEvent]
+    () => activeEvents.find((event) => event.id === selectedEvent),
+    [activeEvents, selectedEvent]
   );
   const votingClosed = useMemo(
     () => isVotingClosed(selectedEventData?.closeAt),
@@ -72,9 +76,10 @@ export default function Page() {
     () =>
       allowedDaysWithinWindow(
         selectedEventData?.window.start ?? "2026-01-07",
-        selectedEventData?.window.end ?? "2026-03-01"
+        selectedEventData?.window.end ?? "2026-03-01",
+        selectedEventData?.blockedDays ?? []
       ),
-    [selectedEventData?.window.end, selectedEventData?.window.start]
+    [selectedEventData?.blockedDays, selectedEventData?.window.end, selectedEventData?.window.start]
   );
   const windowStartDate = useMemo(() => {
     const first = allowedDayKeysForEvent[0];
@@ -123,14 +128,18 @@ export default function Page() {
           { cacheKey: "/api/events", ttlMs: EVENTS_CACHE_TTL_MS }
         );
         setEvents(eventsData);
+        const eligibleEvents = eventsData.filter((event) => !event.completed);
 
         const storedEventId =
           typeof window !== "undefined" ? getStoredEvent() : null;
         const defaultEventId =
-          storedEventId && eventsData.some((event) => event.id === storedEventId)
+          storedEventId && eligibleEvents.some((event) => event.id === storedEventId)
             ? storedEventId
-            : eventsData[0]?.id ?? "";
+            : eligibleEvents[0]?.id ?? "";
         setSelectedEvent(defaultEventId);
+        if (!defaultEventId) {
+          setErrorMessage("No hay eventos activos para votar.");
+        }
       } catch (error) {
         setErrorMessage(
           error instanceof Error ? error.message : "Error al cargar eventos"
@@ -155,7 +164,8 @@ export default function Page() {
             isWithinVoteWindow(
               formatDayKey(date),
               selectedEventData.window.start,
-              selectedEventData.window.end
+              selectedEventData.window.end,
+              selectedEventData.blockedDays ?? []
             )
           );
           return filtered;
@@ -200,7 +210,8 @@ export default function Page() {
       !isWithinVoteWindow(
         dayKey,
         selectedEventData.window.start,
-        selectedEventData.window.end
+        selectedEventData.window.end,
+        selectedEventData.blockedDays ?? []
       )
     )
       return;
@@ -279,6 +290,11 @@ export default function Page() {
           `Nombre: ${voterName || "Pendiente"}`,
         ]}
       />
+      {activeEvents.length === 0 && (
+        <p className="text-amber-300 text-sm">
+          No hay eventos activos disponibles para votar.
+        </p>
+      )}
 
       {!voterName && (
         <p className="text-red-300 text-sm">
