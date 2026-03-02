@@ -25,6 +25,7 @@ export function formatDisplay(dayKey: string): string {
 export function weekendDaysWithinWindow(start: string, end: string): string[] {
   const startDate = parseDayKey(start);
   const endDate = parseDayKey(end);
+  if (!isValid(startDate) || !isValid(endDate)) return [];
   if (isAfter(startDate, endDate)) return [];
 
   const days: string[] = [];
