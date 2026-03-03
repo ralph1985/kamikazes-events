@@ -1,6 +1,7 @@
 "use client";
 
-import { addDays, eachDayOfInterval, endOfWeek, format, isAfter, isBefore, isSameDay, startOfWeek } from 'date-fns';
+import { addDays, eachDayOfInterval, endOfWeek, format, isAfter, isBefore, isSameDay, isSameMonth, startOfWeek } from 'date-fns';
+import { eachMonthOfInterval, endOfMonth, startOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { clsx } from 'clsx';
 import { useMemo } from 'react';
@@ -32,32 +33,25 @@ export function Calendar({
   const allowedSet = useMemo(() => new Set(allowedDayKeys), [allowedDayKeys]);
 
   const weeks = useMemo(() => {
-    const start = startOfWeek(fromDate, { weekStartsOn: 1 });
-    const end = endOfWeek(toDate, { weekStartsOn: 1 });
-    const days = eachDayOfInterval({ start, end });
-    const grouped: { key: string; label: string; weeks: Date[][] }[] = [];
-    let currentMonth = '';
-    let currentWeeks: Date[][] = [];
-    let currentLabel = '';
+    const months = eachMonthOfInterval({ start: fromDate, end: toDate });
+    return months.map((monthDate) => {
+      const monthStart = startOfMonth(monthDate);
+      const monthEnd = endOfMonth(monthDate);
+      const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+      const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+      const days = eachDayOfInterval({ start: gridStart, end: gridEnd });
+      const monthWeeks: Date[][] = [];
 
-    for (let i = 0; i < days.length; i += 7) {
-      const weekDays = days.slice(i, i + 7);
-      const monthLabel = format(weekDays[0], 'yyyy-MM');
-      const label = format(weekDays[0], 'MMMM yyyy', { locale: es });
-      if (monthLabel !== currentMonth) {
-        if (currentWeeks.length > 0) {
-          grouped.push({ key: currentMonth, label: currentLabel, weeks: currentWeeks });
-        }
-        currentMonth = monthLabel;
-        currentWeeks = [];
-        currentLabel = label;
+      for (let i = 0; i < days.length; i += 7) {
+        monthWeeks.push(days.slice(i, i + 7));
       }
-      currentWeeks.push(weekDays);
-    }
-    if (currentWeeks.length > 0) {
-      grouped.push({ key: currentMonth, label: currentLabel, weeks: currentWeeks });
-    }
-    return grouped;
+
+      return {
+        key: format(monthDate, 'yyyy-MM'),
+        label: format(monthDate, 'MMMM yyyy', { locale: es }),
+        weeks: monthWeeks
+      };
+    });
   }, [fromDate, toDate]);
 
   const toggleDate = (day: Date) => {
@@ -103,6 +97,10 @@ export function Calendar({
             {month.weeks.map((week, index) => (
               <div key={`${month.key}-${index}`} className="grid grid-cols-7 gap-2">
                 {week.map((day) => {
+                  const inCurrentMonth = isSameMonth(day, parseMonthDate(month.key));
+                  if (!inCurrentMonth) {
+                    return <div key={day.toISOString()} className="h-12" aria-hidden="true" />;
+                  }
                   const disabled = isDisabled(day);
                   const active = selected.some((d) => isSameDay(d, day));
                   const voteCount = dayVotes?.[formatDayKey(day)] ?? 0;
@@ -138,4 +136,9 @@ export function Calendar({
       </div>
     </div>
   );
+}
+
+function parseMonthDate(monthKey: string): Date {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Date(year, (month || 1) - 1, 1);
 }
