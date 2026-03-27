@@ -16,16 +16,17 @@ export async function GET(request: Request) {
   try {
     const driver = await ensureDefaultEvent();
     const events = await driver.getEvents();
-    const exists = events.some((event) => event.id === eventId);
-    if (!exists) {
+    const event = events.find((item) => item.id === eventId);
+    if (!event) {
       return jsonNoStore({ message: 'Evento no encontrado' }, { status: 400 });
     }
 
     const allowed = new Set(
       allowedDaysWithinWindow(
-        events.find((event) => event.id === eventId)?.window.start ?? '',
-        events.find((event) => event.id === eventId)?.window.end ?? '',
-        events.find((event) => event.id === eventId)?.blockedDays ?? []
+        event.window.start,
+        event.window.end,
+        event.blockedDays ?? [],
+        event.allowAllDays ?? false
       )
     );
     const voters = (await driver.getVotersSelections(eventId)).map((voter) => ({

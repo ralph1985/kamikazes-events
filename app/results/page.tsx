@@ -44,9 +44,15 @@ export default function ResultsPage() {
       allowedDaysWithinWindow(
         selectedEventData?.window.start ?? "",
         selectedEventData?.window.end ?? "",
-        selectedEventData?.blockedDays ?? []
+        selectedEventData?.blockedDays ?? [],
+        selectedEventData?.allowAllDays ?? false
       ),
-    [selectedEventData?.blockedDays, selectedEventData?.window.end, selectedEventData?.window.start]
+    [
+      selectedEventData?.allowAllDays,
+      selectedEventData?.blockedDays,
+      selectedEventData?.window.end,
+      selectedEventData?.window.start,
+    ]
   );
   const [modalDay, setModalDay] = useState<string | null>(null);
   const [modalVoters, setModalVoters] = useState<

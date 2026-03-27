@@ -2,6 +2,7 @@ export type EventItem = {
   id: string;
   name: string;
   completed?: boolean;
+  allowAllDays?: boolean; // Si true, permite votar cualquier día dentro de la ventana
   window: {
     start: string; // YYYY-MM-DD
     end: string; // YYYY-MM-DD

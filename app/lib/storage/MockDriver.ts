@@ -9,6 +9,7 @@ const defaultEvent: EventItem = {
   id: 'babyshower-mullor-gallego-v2',
   name: 'Babyshower Mullor-Gallego V2',
   completed: false,
+  allowAllDays: false,
   window: {
     start: '2026-01-07',
     end: '2026-03-01'
@@ -34,6 +35,7 @@ export class MockDriver implements StorageDriver {
         id: slugify('evento de prueba 1'),
         name: 'evento de prueba 1',
         completed: false,
+        allowAllDays: false,
         window: { start: '2026-01-07', end: '2026-02-01' },
         blockedDays: [],
         closeAt: undefined
@@ -42,6 +44,7 @@ export class MockDriver implements StorageDriver {
         id: slugify('evento de prueba 2'),
         name: 'evento de prueba 2',
         completed: false,
+        allowAllDays: false,
         window: { start: '2026-02-02', end: '2026-03-01' },
         blockedDays: [],
         closeAt: undefined
@@ -70,6 +73,7 @@ export class MockDriver implements StorageDriver {
         id,
         name: typeof name === 'string' ? name : String(name),
         completed: false,
+        allowAllDays: false,
         window: this.windows.get(id) ?? { start: '2026-01-07', end: '2026-03-01' },
         blockedDays: this.blockedDays.get(id) ?? [],
         closeAt: this.closeAt.get(id) ?? '2026-12-21T11:00:00Z'
@@ -100,6 +104,7 @@ export class MockDriver implements StorageDriver {
       id,
       name: this.events.get(id) ?? cleanName,
       completed: false,
+      allowAllDays: false,
       window: this.windows.get(id) ?? window,
       blockedDays: this.blockedDays.get(id) ?? [],
       closeAt: this.closeAt.get(id) ?? closeAt

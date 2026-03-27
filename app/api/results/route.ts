@@ -16,17 +16,18 @@ export async function GET(request: Request) {
 
     const driver = await ensureDefaultEvent();
     const events = await driver.getEvents();
-    const exists = events.some((event) => event.id === eventId);
-    if (!exists) {
+    const event = events.find((item) => item.id === eventId);
+    if (!event) {
       return jsonNoStore({ message: 'El evento no existe' }, { status: 400 });
     }
 
     const results = await driver.getResults(eventId);
     const allowed = new Set(
       allowedDaysWithinWindow(
-        events.find((event) => event.id === eventId)?.window.start ?? '',
-        events.find((event) => event.id === eventId)?.window.end ?? '',
-        events.find((event) => event.id === eventId)?.blockedDays ?? []
+        event.window.start,
+        event.window.end,
+        event.blockedDays ?? [],
+        event.allowAllDays ?? false
       )
     );
     const filtered = results.filter((result) => allowed.has(result.day));

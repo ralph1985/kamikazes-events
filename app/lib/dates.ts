@@ -43,14 +43,18 @@ export function weekendDaysWithinWindow(start: string, end: string): string[] {
 export function allowedDaysWithinWindow(
   start: string,
   end: string,
-  blockedDays: string[] = []
+  blockedDays: string[] = [],
+  allowAllDays = false
 ): string[] {
+  const daysWithinWindow = allowAllDays
+    ? allDaysWithinWindow(start, end)
+    : weekendDaysWithinWindow(start, end);
   const blockedSet = new Set(
     blockedDays
       .filter((value) => isValidDayKey(value))
       .map((value) => formatDayKey(parseDayKey(value)))
   );
-  return weekendDaysWithinWindow(start, end).filter((day) => !blockedSet.has(day));
+  return daysWithinWindow.filter((day) => !blockedSet.has(day));
 }
 
 export function firstAllowedDay(start: string, end: string, blockedDays: string[] = []): Date {
@@ -63,11 +67,27 @@ export function isWithinVoteWindow(
   dayKey: string,
   start: string,
   end: string,
-  blockedDays: string[] = []
+  blockedDays: string[] = [],
+  allowAllDays = false
 ): boolean {
   if (!isValidDayKey(dayKey)) return false;
-  const filtered = allowedDaysWithinWindow(start, end, blockedDays);
+  const filtered = allowedDaysWithinWindow(start, end, blockedDays, allowAllDays);
   return filtered.includes(formatDayKey(parseDayKey(dayKey)));
+}
+
+function allDaysWithinWindow(start: string, end: string): string[] {
+  const startDate = parseDayKey(start);
+  const endDate = parseDayKey(end);
+  if (!isValid(startDate) || !isValid(endDate)) return [];
+  if (isAfter(startDate, endDate)) return [];
+
+  const days: string[] = [];
+  let cursor = startDate;
+  while (!isAfter(cursor, endDate)) {
+    days.push(formatDayKey(cursor));
+    cursor = addDays(cursor, 1);
+  }
+  return days;
 }
 
 export function toDate(key: string): Date {

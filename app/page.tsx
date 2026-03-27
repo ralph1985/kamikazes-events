@@ -78,9 +78,15 @@ export default function Page() {
       allowedDaysWithinWindow(
         selectedEventData?.window.start ?? "2026-01-07",
         selectedEventData?.window.end ?? "2026-03-01",
-        selectedEventData?.blockedDays ?? []
+        selectedEventData?.blockedDays ?? [],
+        selectedEventData?.allowAllDays ?? false
       ),
-    [selectedEventData?.blockedDays, selectedEventData?.window.end, selectedEventData?.window.start]
+    [
+      selectedEventData?.allowAllDays,
+      selectedEventData?.blockedDays,
+      selectedEventData?.window.end,
+      selectedEventData?.window.start,
+    ]
   );
   const windowStartDate = useMemo(() => {
     const first = allowedDayKeysForEvent[0];
@@ -167,7 +173,8 @@ export default function Page() {
               formatDayKey(date),
               selectedEventData.window.start,
               selectedEventData.window.end,
-              selectedEventData.blockedDays ?? []
+              selectedEventData.blockedDays ?? [],
+              selectedEventData.allowAllDays ?? false
             )
           );
           return filtered;
@@ -213,7 +220,8 @@ export default function Page() {
         dayKey,
         selectedEventData.window.start,
         selectedEventData.window.end,
-        selectedEventData.blockedDays ?? []
+        selectedEventData.blockedDays ?? [],
+        selectedEventData.allowAllDays ?? false
       )
     )
       return;

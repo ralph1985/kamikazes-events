@@ -55,7 +55,8 @@ export async function POST(request: Request) {
                       day,
                       event.window.start,
                       event.window.end,
-                      event.blockedDays ?? []
+                      event.blockedDays ?? [],
+                      event.allowAllDays ?? false
                     )
                   )
                     throw new Error('Fuera de rango');
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     } catch {
       return jsonNoStore(
         {
-          message: 'El día no es válido, no cae en fin de semana o está bloqueado para este evento'
+          message: 'El día no es válido, está fuera de la ventana o bloqueado para este evento'
         },
         { status: 400 }
       );
@@ -102,7 +103,13 @@ export async function GET(request: Request) {
     const selection = await driver.getSelection(eventId, voterId);
     const normalized = selection
       .filter((day) =>
-        isWithinVoteWindow(day, event.window.start, event.window.end, event.blockedDays ?? [])
+        isWithinVoteWindow(
+          day,
+          event.window.start,
+          event.window.end,
+          event.blockedDays ?? [],
+          event.allowAllDays ?? false
+        )
       )
       .map((day) => formatDayKey(parseDayKey(day)));
 
